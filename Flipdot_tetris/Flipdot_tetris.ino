@@ -7,6 +7,7 @@ Todo:
 - collision detection left/right
 - add draw block function
 - test github desktop
+- test github edit
 
 Done
 - collision detection bottom
