@@ -1,28 +1,27 @@
 
 /*
 Todo:
-
 - control cant change within frame?
-
 - clear lines
 - block changes
-- collision detectiona
+- collision detection left/right
+- add draw block function
 
-
+Done
+- collision detection bottom
 */
 
 
 #define PANEL_NOF_COLUMNS 28  ///< Number of columns per panel
 #define DISPLAY_NOF_PANELS 4  ///< Number of daisy chained panels that form the display.
 #define DISPLAY_NOF_ROWS 16   ///< Number of rows of the display
-
 #define DISPLAY_NOF_COLUMNS PANEL_NOF_COLUMNS* DISPLAY_NOF_PANELS  ///< Total number of columns of the display
+
 #define ON_STATE 1
 #define OFF_STATE 0
 #define PLAYFIELD_TOP 2
 #define PLAYFIELD_BOTTOM 13
 #define PLAYFIELD_RIGHT 2
-
 
 #include "ESP32Wiimote.h"
 
@@ -221,7 +220,7 @@ void loop() {
   }
 
   //////////////////////////////////////////////////////////////////////////
-  //// Snake game section
+  //// Tetris game section
   if (waiter == 5000) {
     //wait for input to start game
     if (gamestate == 1) {
@@ -252,24 +251,18 @@ void loop() {
       }
       //Drawshape
 
-
-
-
-
-
-
       //if nothing:
       //block bottom detection
       if (blockX > 0) {
         blockX--;
-        if (playfield[blockX][blockY] == 1 or playfield[blockX+1][blockY] == 1 or playfield[blockX][blockY+1] == 1 or playfield[blockX+1][blockY+1] == 1) {
+        if (playfield[blockX][blockY] == 1 or playfield[blockX + 1][blockY] == 1 or playfield[blockX][blockY + 1] == 1 or playfield[blockX + 1][blockY + 1] == 1) {
           blockX++;
           playfield[blockX][blockY] = 1;
           playfield[blockX + 1][blockY] = 1;
           playfield[blockX][blockY + 1] = 1;
           playfield[blockX + 1][blockY + 1] = 1;
-        blockX = 50;
-        blockY = 7;
+          blockX = 50;
+          blockY = 7;
         }
       }
 
@@ -283,10 +276,6 @@ void loop() {
         blockY = 7;
       }
 
-
-
-
-
       for (int i = 0; i <= 12; i++) {
         for (int j = 0; j <= 112; j++) {
           if (playfield[j][i] == 1) { drawDot(j, i, ON_STATE); }
@@ -298,9 +287,6 @@ void loop() {
       //drawDot(blockX+1,blockY,ON_STATE);
       //drawDot(blockX,blockY+1,ON_STATE);
       //drawDot(blockX+1,blockY+1,ON_STATE);
-
-
-
 
       drawDot(blockX, blockY, ON_STATE);
       drawDot(blockX + 1, blockY, ON_STATE);
@@ -320,18 +306,6 @@ void loop() {
 
     lastbutton = 0;
     exbutton = 0;
-
-    //self collision
-
-
-
-
-
-
-
-
-
-
 
     delay(5);
     waiter = 0;
