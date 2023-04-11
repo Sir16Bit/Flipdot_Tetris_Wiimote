@@ -60,7 +60,8 @@ int logo5[] = { 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1 };
 //int blocks[6][3];
 
 int blocks[7][4] = { { 0b000011110000000, 0b0010001000100010, 0b0000000011110000, 0b0100010001000100 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 } };
-
+int blockType = 0;
+int blockRotation = 2;
 
 
 
@@ -260,10 +261,26 @@ void loop() {
 
       oldblockX = blockX;
       oldblockY = blockY;
-      drawDot(oldblockX, oldblockY, OFF_STATE);
-      drawDot(oldblockX + 1, oldblockY, OFF_STATE);
-      drawDot(oldblockX, oldblockY + 1, OFF_STATE);
-      drawDot(oldblockX + 1, oldblockY + 1, OFF_STATE);
+
+      //turn off old block
+
+      for (int i = 0; i <= 15; i++) {
+
+        if (bitRead(blocks[blockType][blockRotation], i)) {
+          drawDot(i % 4 + blockX, i / 4 + blockY, OFF_STATE);
+          //drawDot(blockX + 1, blockY, ON_STATE);
+          // drawDot(blockX, blockY + 1, ON_STATE);
+          //drawDot(blockX + 1, blockY + 1, ON_STATE);
+        }
+      }
+
+
+      //drawDot(oldblockX, oldblockY, OFF_STATE);
+      //drawDot(oldblockX + 1, oldblockY, OFF_STATE);
+      //drawDot(oldblockX, oldblockY + 1, OFF_STATE);
+      //drawDot(oldblockX + 1, oldblockY + 1, OFF_STATE);
+
+
       if (exbutton > 0) {
         //if (exbutton == 1) { delay(1); } //A
         //if (exbutton == 2) { delay(1); } //LEft
@@ -271,6 +288,8 @@ void loop() {
         if (exbutton == 4) {
           if (blockY > PLAYFIELD_TOP + 1) { blockY--; }
         }  //Up
+        if (exbutton == 1) {
+          blockRotation = blockRotation + 1 % 4; }
         if (exbutton == 5) {
           if (blockY < PLAYFIELD_BOTTOM - blockWidth) { blockY++; }
         }                                         //Down
@@ -292,7 +311,10 @@ void loop() {
         downWaiter = 0;
         if (blockX > 0) {
           blockX--;
+
+
           if (playfield[blockX][blockY] == 1 or playfield[blockX + 1][blockY] == 1 or playfield[blockX][blockY + 1] == 1 or playfield[blockX + 1][blockY + 1] == 1) {
+            //if block collides with playfield, move back up and convert to playfield
             blockX++;
             playfield[blockX][blockY] = 1;
             playfield[blockX + 1][blockY] = 1;
@@ -304,7 +326,7 @@ void loop() {
         }
 
         else {
-
+          //if block is at bottom; lock and convert to playfield
           playfield[blockX][blockY] = 1;
           playfield[blockX + 1][blockY] = 1;
           playfield[blockX][blockY + 1] = 1;
@@ -328,28 +350,33 @@ void loop() {
       //drawDot(blockX,blockY+1,ON_STATE);
       //drawDot(blockX+1,blockY+1,ON_STATE);
 
-      drawDot(blockX, blockY, ON_STATE);
-      drawDot(blockX + 1, blockY, ON_STATE);
-      drawDot(blockX, blockY + 1, ON_STATE);
-      drawDot(blockX + 1, blockY + 1, ON_STATE);
-    }
 
-    if (gamestate == 0) {
-      ///Serial.print("exbutton is:");
-      // Serial.println(exbutton);
-      if (exbutton > 0 and exbutton < 6) {
-        lastbutton = 0;
-        exbutton = 0;
-        switchToPlaying();
+      for (int i = 0; i <= 15; i++) {
+
+        if (bitRead(blocks[blockType][blockRotation], i)) {
+          drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE);
+          //drawDot(blockX + 1, blockY, ON_STATE);
+          // drawDot(blockX, blockY + 1, ON_STATE);
+          //drawDot(blockX + 1, blockY + 1, ON_STATE);
+        }
       }
     }
+      if (gamestate == 0) {
+        ///Serial.print("exbutton is:");
+        // Serial.println(exbutton);
+        if (exbutton > 0 and exbutton < 6) {
+          lastbutton = 0;
+          exbutton = 0;
+          switchToPlaying();
+        }
+      }
 
-    lastbutton = 0;
-    exbutton = 0;
+      lastbutton = 0;
+      exbutton = 0;
 
-    delay(5);
-    waiter = 0;
-  } else {
-    waiter++;
+      delay(5);
+      waiter = 0;
+    } else {
+      waiter++;
+    }
   }
-}
