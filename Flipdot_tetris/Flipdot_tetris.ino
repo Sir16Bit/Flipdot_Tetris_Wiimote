@@ -55,6 +55,18 @@ int logo3[] = { 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1 };
 int logo4[] = { 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1 };
 int logo5[] = { 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1 };
 
+//int blocks[6][3];
+
+//int blocks[6][3];
+
+int blocks[7][4] = { { 0b000011110000000, 0b0010001000100010, 0b0000000011110000, 0b0100010001000100 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 }, { 0b000011110000000, 0b000011110000000, 0b000011110000000, 0b000011110000000 } };
+
+
+
+
+
+
+
 void drawDot(int col, int row, int pol) {
   /**
    * Serial command format: Two consecutive bytes containing x,y coordinates and dot polarity (on/off.)
@@ -80,6 +92,11 @@ void drawDot(int col, int row, int pol) {
 void switchToSplash() {
   Serial.println("goto splashing");
   gamestate = 0;
+  for (int i = 0; i <= 12; i++) {
+    for (int j = 0; j <= 112; j++) {
+      playfield[j][i] = 0;
+    }
+  }
   clearScreen();
   drawLogo();
   lastbutton = 0;
@@ -151,6 +168,10 @@ void setup() {
   Serial2.begin(74880);
   clearScreen();
   switchToSplash();
+  Serial.println(blocks[0][0]);
+  //Serial.println(blocks[0][1]);
+  // Serial.println(blocks[0][2]);
+  // Serial.println(blocks[0][3]);
 }
 
 
@@ -267,23 +288,12 @@ void loop() {
       //if nothing:
       //block bottom detection
 
-      if (downWaiter >= 4){
-          downWaiter = 0;
-          if (blockX > 0) {
-            blockX--;
-            if (playfield[blockX][blockY] == 1 or playfield[blockX + 1][blockY] == 1 or playfield[blockX][blockY + 1] == 1 or playfield[blockX + 1][blockY + 1] == 1) {
-              blockX++;
-              playfield[blockX][blockY] = 1;
-              playfield[blockX + 1][blockY] = 1;
-              playfield[blockX][blockY + 1] = 1;
-              playfield[blockX + 1][blockY + 1] = 1;
-              blockX = 50;
-              blockY = 7;
-            }
-          }
-
-          else {
-
+      if (downWaiter >= 4) {
+        downWaiter = 0;
+        if (blockX > 0) {
+          blockX--;
+          if (playfield[blockX][blockY] == 1 or playfield[blockX + 1][blockY] == 1 or playfield[blockX][blockY + 1] == 1 or playfield[blockX + 1][blockY + 1] == 1) {
+            blockX++;
             playfield[blockX][blockY] = 1;
             playfield[blockX + 1][blockY] = 1;
             playfield[blockX][blockY + 1] = 1;
@@ -292,7 +302,19 @@ void loop() {
             blockY = 7;
           }
         }
-      else { downWaiter++; }
+
+        else {
+
+          playfield[blockX][blockY] = 1;
+          playfield[blockX + 1][blockY] = 1;
+          playfield[blockX][blockY + 1] = 1;
+          playfield[blockX + 1][blockY + 1] = 1;
+          blockX = 50;
+          blockY = 7;
+        }
+      } else {
+        downWaiter++;
+      }
       //update playfield
       for (int i = 0; i <= 12; i++) {
         for (int j = 0; j <= 112; j++) {
@@ -313,8 +335,8 @@ void loop() {
     }
 
     if (gamestate == 0) {
-      Serial.print("exbutton is:");
-      Serial.println(exbutton);
+      ///Serial.print("exbutton is:");
+      // Serial.println(exbutton);
       if (exbutton > 0 and exbutton < 6) {
         lastbutton = 0;
         exbutton = 0;
