@@ -18,9 +18,9 @@ Done
 */
 
 
-#define PANEL_NOF_COLUMNS 28  ///< Number of columns per panel
-#define DISPLAY_NOF_PANELS 4  ///< Number of daisy chained panels that form the display.
-#define DISPLAY_NOF_ROWS 16   ///< Number of rows of the display
+#define PANEL_NOF_COLUMNS 28                                       ///< Number of columns per panel
+#define DISPLAY_NOF_PANELS 4                                       ///< Number of daisy chained panels that form the display.
+#define DISPLAY_NOF_ROWS 16                                        ///< Number of rows of the display
 #define DISPLAY_NOF_COLUMNS PANEL_NOF_COLUMNS* DISPLAY_NOF_PANELS  ///< Total number of columns of the display
 
 #define ON_STATE 1
@@ -47,7 +47,7 @@ int blockY = 7;
 int blockWidth = 2;
 int oldblockX = 0;
 int oldblockY = 0;
-
+int downWaiter = 0;
 
 int logo1[] = { 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1 };
 int logo2[] = { 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0 };
@@ -227,9 +227,16 @@ void loop() {
 
   //////////////////////////////////////////////////////////////////////////
   //// Tetris game section
-  if (waiter == 5000) {
+  if (waiter == 2000) {
     //wait for input to start game
     if (gamestate == 1) {
+
+
+
+
+
+
+
       oldblockX = blockX;
       oldblockY = blockY;
       drawDot(oldblockX, oldblockY, OFF_STATE);
@@ -259,29 +266,34 @@ void loop() {
 
       //if nothing:
       //block bottom detection
-      if (blockX > 0) {
-        blockX--;
-        if (playfield[blockX][blockY] == 1 or playfield[blockX + 1][blockY] == 1 or playfield[blockX][blockY + 1] == 1 or playfield[blockX + 1][blockY + 1] == 1) {
-          blockX++;
-          playfield[blockX][blockY] = 1;
-          playfield[blockX + 1][blockY] = 1;
-          playfield[blockX][blockY + 1] = 1;
-          playfield[blockX + 1][blockY + 1] = 1;
-          blockX = 50;
-          blockY = 7;
+
+      if (downWaiter >= 4){
+          downWaiter = 0;
+          if (blockX > 0) {
+            blockX--;
+            if (playfield[blockX][blockY] == 1 or playfield[blockX + 1][blockY] == 1 or playfield[blockX][blockY + 1] == 1 or playfield[blockX + 1][blockY + 1] == 1) {
+              blockX++;
+              playfield[blockX][blockY] = 1;
+              playfield[blockX + 1][blockY] = 1;
+              playfield[blockX][blockY + 1] = 1;
+              playfield[blockX + 1][blockY + 1] = 1;
+              blockX = 50;
+              blockY = 7;
+            }
+          }
+
+          else {
+
+            playfield[blockX][blockY] = 1;
+            playfield[blockX + 1][blockY] = 1;
+            playfield[blockX][blockY + 1] = 1;
+            playfield[blockX + 1][blockY + 1] = 1;
+            blockX = 50;
+            blockY = 7;
+          }
         }
-      }
-
-      else {
-
-        playfield[blockX][blockY] = 1;
-        playfield[blockX + 1][blockY] = 1;
-        playfield[blockX][blockY + 1] = 1;
-        playfield[blockX + 1][blockY + 1] = 1;
-        blockX = 50;
-        blockY = 7;
-      }
-
+      else { downWaiter++; }
+      //update playfield
       for (int i = 0; i <= 12; i++) {
         for (int j = 0; j <= 112; j++) {
           if (playfield[j][i] == 1) { drawDot(j, i, ON_STATE); }
