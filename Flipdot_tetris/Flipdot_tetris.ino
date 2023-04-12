@@ -162,9 +162,10 @@ void newBlock() {
 int detectPlayfieldCollision() {
   int detected = 0;
   for (int i = 0; i <= 15; i++) {
-    //if(i % 4 + blockX) == (detected = 1;)
+    
     if (bitRead(blocks[blockType][blockRotation], i)) {
       if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }
+      if(i % 4 + blockX == -1) {detected = 1;}
     }
   }
   Serial.println("detecting");
@@ -347,7 +348,7 @@ playfieldCollision = 0;
       if (downWaiter >= 4) {
         downWaiter = 0;
 
-        if (blockX > 0) {
+        if (1) {
           blockX--;
 
           //detectPlayfieldCollision();
@@ -355,9 +356,7 @@ playfieldCollision = 0;
             //if block collides with playfield, move back up and convert to playfield
             blockX++;
             for (int i = 0; i <= 15; i++) {
-
               if (bitRead(blocks[blockType][blockRotation], i)) {
-
                 playfield[i % 4 + blockX][i / 4 + blockY] = 1;
               }
             }
