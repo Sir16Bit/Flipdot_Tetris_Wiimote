@@ -1,20 +1,17 @@
 
 /*
 Todo:
+- Redrawing entire playfield is slow (only redraw changes)
+- death (collision on new block)
+- Bug wobbly dots
+- Bug slowdown after ~10 blocks
+- block dissapears when line clearing
+- movement too fast
+- rotation too fast
+- score
 
-- random select block
-- new block function
-- fix collision detection left/right (block width)
-
-- clear lines
 
 
-
-Done
-- collision detection bottom
-- add draw block function 
-- control cant change within frame?
-- fix collision detection playfield
 */
 
 
@@ -109,8 +106,8 @@ void switchToSplash() {
 }
 
 void switchToPlaying() {
-  blockX = 50;
-  blockY = 7;
+  //blockX = 50;
+  //blockY = 7;
   Serial.println("goto playing");
   gamestate = 1;
   lastbutton = 0;
@@ -125,6 +122,7 @@ void switchToPlaying() {
     drawDot(j, PLAYFIELD_TOP, ON_STATE);
     drawDot(j, PLAYFIELD_BOTTOM, ON_STATE);
   }
+  newBlock();
 }
 
 
@@ -150,22 +148,61 @@ void clearScreen() {
 
 void newBlock() {
 
+  //clear lines
+  for (int i = 0; i <= 112; i++) {
+    int lineCount = 0;
+    for (int j = 3; j <= 12; j++) {
+      if (playfield[i][j] == 1) { lineCount++; }
+    }
+    if (lineCount == 10) {  //full line
+      //clear line + update playfield
+      for (int k = 3; k <= 12; k++) {
+        drawDot(i, k, OFF_STATE);
+        delay(100);
+        playfield[i][k] = 0;
+
+
+        //squash blocks
+      }
+      for (int cl = i; cl <= 112; cl++) {
+        for (int m = 3; m <= 12; m++) {
+          playfield[cl][m] = playfield[cl + 1][m];
+        }
+      }
+      i--;
+    }
+
+
+    // Serial.print(lineCount);
+    //delay(10);
+  }
+
+  //refresh playfield
+  for (int i = 3; i <= 12; i++) {
+    for (int j = 0; j <= 112; j++) {
+      if (playfield[j][i] == 0) { drawDot(j, i, OFF_STATE); }
+      if (playfield[j][i] == 1) { drawDot(j, i, ON_STATE); }
+    }
+  }
+
+
+
+  //Serial.println("");
+
   blockType = random(6);
   blockRotation = random(3);
-  ;
 
-
-  blockX = 50;
+  blockX = 20;
   blockY = 7;
 }
 
 int detectPlayfieldCollision() {
   int detected = 0;
   for (int i = 0; i <= 15; i++) {
-    
+
     if (bitRead(blocks[blockType][blockRotation], i)) {
-      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; } //detect playfield
-      if(i % 4 + blockX == -1) {detected = 1;} //detect Right
+      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  //detect playfield
+      if (i % 4 + blockX == -1) { detected = 1; }                            //detect Right
       //if(i % 4 + blockY == 2) {detected = 1;} //detect Top
     }
   }
@@ -176,12 +213,12 @@ int detectPlayfieldCollision() {
 int detectPlayfieldCollisionSide() {
   int detected = 0;
   for (int i = 0; i <= 15; i++) {
-    
+
     if (bitRead(blocks[blockType][blockRotation], i)) {
-      if(i / 4 + blockY == 2) {detected = 1;} //detect top
-      if(i / 4 + blockY == 13) {detected = 1;} //detect bottom
-      
-      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; } //detect playfield
+      if (i / 4 + blockY == 2) { detected = 1; }   //detect top
+      if (i / 4 + blockY == 13) { detected = 1; }  //detect bottom
+
+      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  //detect playfield
     }
   }
   Serial.println("detecting");
@@ -191,12 +228,12 @@ int detectPlayfieldCollisionSide() {
 int detectPlayfieldCollisionRotate() {
   int detected = 0;
   for (int i = 0; i <= 15; i++) {
-    
+
     if (bitRead(blocks[blockType][blockRotation], i)) {
-      if(i / 4 + blockY == 2) {detected = 1;} //detect top
-      if(i / 4 + blockY == 13) {detected = 1;} //detect bottom
-       if(i % 4 + blockX == -1) {detected = 1;}
-      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; } //detect playfield
+      if (i / 4 + blockY == 2) { detected = 1; }   //detect top
+      if (i / 4 + blockY == 13) { detected = 1; }  //detect bottom
+      if (i % 4 + blockX == -1) { detected = 1; }
+      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  //detect playfield
     }
   }
   Serial.println("detecting");
@@ -337,33 +374,27 @@ void loop() {
           blockRotation++;
           if (blockRotation == 4) { blockRotation = 0; }
 
-          if(detectPlayfieldCollisionRotate() == 1) { blockRotation--;  if (blockRotation == -1) { blockRotation = 3; }
-          
-          
+          if (detectPlayfieldCollisionRotate() == 1) {
+            blockRotation--;
+            if (blockRotation == -1) { blockRotation = 3; }
           }
-
-
-
-
         }
-        
+
         //if (exbutton == 1) { delay(1); } //A
         //if (exbutton == 2) { delay(1); } //LEft
         // if (exbutton == 3) { delay(1); } //Right
         if (exbutton == 4) {
           blockY--;
-                    if (detectPlayfieldCollisionSide() == 1) {
+          if (detectPlayfieldCollisionSide() == 1) {
             //if block collides with playfield, move back up and convert to playfield
             blockY++;
-
-           
           }
-          
-          
-          
-          
-          
-          
+
+
+
+
+
+
           //if (blockY > PLAYFIELD_TOP - blockWidth) { blockY--; }
 
           /*
@@ -387,9 +418,10 @@ playfieldCollision = 0;
 
         if (exbutton == 5) {
           blockY++;
-                    if (detectPlayfieldCollisionSide() == 1) {
+          if (detectPlayfieldCollisionSide() == 1) {
             //if block collides with playfield, move back up and convert to playfield
-            blockY--;}
+            blockY--;
+          }
         }                                         //Down
         if (exbutton == 6) { switchToSplash(); }  //reset
 
