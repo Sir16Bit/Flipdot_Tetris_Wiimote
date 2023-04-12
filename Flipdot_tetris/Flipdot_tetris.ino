@@ -164,15 +164,29 @@ int detectPlayfieldCollision() {
   for (int i = 0; i <= 15; i++) {
     
     if (bitRead(blocks[blockType][blockRotation], i)) {
-      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }
-      if(i % 4 + blockX == -1) {detected = 1;}
+      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; } //detect playfield
+      if(i % 4 + blockX == -1) {detected = 1;} //detect Right
+      //if(i % 4 + blockY == 2) {detected = 1;} //detect Top
     }
   }
   Serial.println("detecting");
   return detected;
 }
 
-
+int detectPlayfieldCollisionSide() {
+  int detected = 0;
+  for (int i = 0; i <= 15; i++) {
+    
+    if (bitRead(blocks[blockType][blockRotation], i)) {
+      if(i / 4 + blockY == 2) {detected = 1;} //detect top
+      if(i / 4 + blockY == 13) {detected = 1;} //detect bottom
+      
+      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; } //detect playfield
+    }
+  }
+  Serial.println("detecting");
+  return detected;
+}
 
 
 
@@ -303,11 +317,25 @@ void loop() {
           blockRotation++;
           if (blockRotation == 4) { blockRotation = 0; }
         }
+        
         //if (exbutton == 1) { delay(1); } //A
         //if (exbutton == 2) { delay(1); } //LEft
         // if (exbutton == 3) { delay(1); } //Right
         if (exbutton == 4) {
-          if (blockY > PLAYFIELD_TOP - blockWidth) { blockY--; }
+          blockY--;
+                    if (detectPlayfieldCollisionSide() == 1) {
+            //if block collides with playfield, move back up and convert to playfield
+            blockY++;
+
+           
+          }
+          
+          
+          
+          
+          
+          
+          //if (blockY > PLAYFIELD_TOP - blockWidth) { blockY--; }
 
           /*
  for (int i = 0; i <= 15; i++) { blockY--;
@@ -329,7 +357,10 @@ playfieldCollision = 0;
         }  //Up
 
         if (exbutton == 5) {
-          if (blockY < PLAYFIELD_BOTTOM - blockWidth) { blockY++; }
+          blockY++;
+                    if (detectPlayfieldCollisionSide() == 1) {
+            //if block collides with playfield, move back up and convert to playfield
+            blockY--;}
         }                                         //Down
         if (exbutton == 6) { switchToSplash(); }  //reset
 
