@@ -63,7 +63,7 @@ int logo5[] = { 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1 };
 int blocks[7][4] = { { 0b0000111100000000, 0b0010001000100010, 0b0000000011110000, 0b0100010001000100 }, { 0b1000111000000000, 0b0110010001000000, 0b0000111000100000, 0b0100010011000000 }, { 0b0010111000000000, 0b0100010001100000, 0b0000111010000000, 0b1100010001000000 }, { 0b0110011000000000, 0b0110011000000000, 0b0110011000000000, 0b0110011000000000 }, { 0b0110110000000000, 0b0100011000100000, 0b0000011011000000, 0b1000110001000000 }, { 0b0100111000000000, 0b0100011001000000, 0b0000111001000000, 0b0100110001000000 }, { 0b1100011000000000, 0b0010011001000000, 0b0000110001100000, 0b0100110010000000 } };
 
 
-int playfieldCollision = 0;
+//int playfieldCollision = 0;
 int blockType = 0;
 int blockRotation = 0;
 
@@ -187,6 +187,26 @@ int detectPlayfieldCollisionSide() {
   Serial.println("detecting");
   return detected;
 }
+
+int detectPlayfieldCollisionRotate() {
+  int detected = 0;
+  for (int i = 0; i <= 15; i++) {
+    
+    if (bitRead(blocks[blockType][blockRotation], i)) {
+      if(i / 4 + blockY == 2) {detected = 1;} //detect top
+      if(i / 4 + blockY == 13) {detected = 1;} //detect bottom
+       if(i % 4 + blockX == -1) {detected = 1;}
+      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; } //detect playfield
+    }
+  }
+  Serial.println("detecting");
+  return detected;
+}
+
+
+
+
+
 
 
 
@@ -316,6 +336,15 @@ void loop() {
         if (exbutton == 1) {
           blockRotation++;
           if (blockRotation == 4) { blockRotation = 0; }
+
+          if(detectPlayfieldCollisionRotate() == 1) { blockRotation--;  if (blockRotation == -1) { blockRotation = 3; }
+          
+          
+          }
+
+
+
+
         }
         
         //if (exbutton == 1) { delay(1); } //A
@@ -443,7 +472,7 @@ playfieldCollision = 0;
 
     lastbutton = 0;
     exbutton = 0;
-    playfieldCollision = 0;
+    //playfieldCollision = 0;
     delay(5);
     waiter = 0;
   } else {
