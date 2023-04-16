@@ -16,6 +16,15 @@ Todo:
 - Request: show next block chasing
 - Request: Show pixelbar logo when standby
 
+
+
+notes:
+Move undraw to not 'collide with bottom' then playfield update is not needed. 
+
+Last button should be oldExButton
+
+
+
 */
 
 #define PANEL_NOF_COLUMNS 28                                       ///< Number of columns per panel
@@ -47,6 +56,22 @@ int blockY = 7;
 int oldblockX = 0;
 int oldblockY = 0;
 int downWaiter = 0;
+
+
+
+
+
+int gameover[28] = { 0b0011110000111000, 0b1100011011111110, 0b0011111001110011, 0b0111111101111110,
+                     0b0110000001111100, 0b1110111011100000, 0b0111001101110011, 0b0111000001110011,
+                     0b1110000011100110, 0b1111111011100000, 0b0111001101110011, 0b0111000001110011,
+                     0b1110111011100110, 0b1111111011111100, 0b0111001101110011, 0b0111111001110110,
+                     0b1110011011111110, 0b1101011011100000, 0b0111001100110110, 0b0111000001111100,
+                     0b0110011011100110, 0b1100011011100000, 0b0111001100011100, 0b0111000001110110,
+                     0b0011111011100110, 0b1100011011111110, 0b0011111000001000, 0b0111111101110011 };
+
+
+
+
 
 int logo1[] = { 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1 };
 int logo2[] = { 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0 };
