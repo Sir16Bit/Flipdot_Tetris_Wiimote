@@ -10,7 +10,7 @@ features:
 
 - add: score
 - movement needs timeout + repeating (now only has timeout)
-- rotate controller use
+
 
 - Bug: rotation sometimes skips timout when holding down button
 - Bug block goes invisible when moving while locking
@@ -165,7 +165,7 @@ void switchToPlaying() {
   }
   newBlock();
 
-  if (0) { //add lines for debug
+  if (0) {  //add lines for debug
     //add lines
     for (int i = 0; i <= 11; i++) {
       for (int j = 0; j <= 4; j++) {
@@ -339,15 +339,18 @@ void loop() {
       char cup = (button & BUTTON_UP) ? '^' : '.';
       char cdown = (button & BUTTON_DOWN) ? 'v' : '.';
 
-      if (button & BUTTON_LEFT) { exbutton = 2; }
-      if (button & BUTTON_RIGHT) { exbutton = 3; }
-      if (button & BUTTON_UP) { exbutton = 4; }
-      if (button & BUTTON_DOWN) { exbutton = 5; }
+      if (button & BUTTON_LEFT) { exbutton = 5; }   //left      2
+      if (button & BUTTON_RIGHT) { exbutton = 4; }  //right  3
+      if (button & BUTTON_UP) { exbutton = 2; }     //up  4
+      if (button & BUTTON_DOWN) { exbutton = 3; }   //down  5
       if (button & BUTTON_HOME) { exbutton = 6; }
-      // Serial.println(button);
-      // Serial.println(BUTTON_A);
-      // Serial.println(button & BUTTON_A);
+
       if (button & BUTTON_A) { exbutton = 1; }
+      if (button & BUTTON_ONE) { exbutton = 7; }
+      if (button & BUTTON_TWO) { exbutton = 8; }
+
+
+
 
       // Serial.println(ca);
       // Serial.println();
@@ -392,8 +395,8 @@ void loop() {
         oldblockY = blockY;
         oldblockRotation = blockRotation;
 
-        if (exbutton > 0) {  //any button pressed
-          if (exbutton == 3 and oldExbutton != 3) {
+        if (exbutton > 0) {                          //any button pressed
+          if (exbutton == 3 and oldExbutton != 3) {  //right (towards bottom)
             turnOffOldblock();
             while (detectPlayfieldCollision() == 0) {
 
@@ -415,10 +418,21 @@ void loop() {
             newBlock();
           }
 
-          if (exbutton == 1 and oldExbutton != 1) {  // Button A; Rotate
+          
+          
+          
+          if (exbutton == 8 and oldExbutton != 8) {  // Button one; Rotate
+            blockRotation--; if(blockRotation == -1){blockRotation = 3;} 
+            turnOffOldblock();
+            if (detectPlayfieldCollisionRotate() == 1) { blockRotation = (blockRotation + 1) % 4; }
+          }
+
+
+
+          if (exbutton == 7 and oldExbutton != 7) {  // Button two; Rotate
             blockRotation = (blockRotation + 1) % 4;
             turnOffOldblock();
-            if (detectPlayfieldCollisionRotate() == 1) { blockRotation = (blockRotation - 1) % 4; }
+            if (detectPlayfieldCollisionRotate() == 1) { blockRotation--; if(blockRotation == -1){blockRotation = 3;} }
           }
 
           if (exbutton == 4 and oldExbutton != 4) {  // Button Up
