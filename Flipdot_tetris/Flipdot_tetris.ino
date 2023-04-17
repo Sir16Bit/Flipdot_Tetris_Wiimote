@@ -7,15 +7,16 @@ Todo:
 
 
 features:
-- add dead drop
-- add: score
-- done: convert gamestates to switch/case
-- movement needs timeout + repeating (now only has timeout)
 
+- add: score
+- movement needs timeout + repeating (now only has timeout)
+- rotate controller use
 
 - Bug: rotation sometimes skips timout when holding down button
-- Bug multiple line clear animations is wrong
-- Bug block goes invisible when moving while locking (not fixed but not a problem with movement timeout)
+- Bug block goes invisible when moving while locking
+- Bug: when holding button sometimes input is missed?
+
+
 
 
 - Request: show next block chasing
@@ -134,11 +135,13 @@ void turnOffOldblock() {
 
 
 void switchToDeath() {
+  oldExbutton = 0;
+  exbutton = 0;
   gamestate = 2;
   clearScreen();
   delay(500);
 
- 
+
 
   for (int j = 0; j <= 63; j++) {
     for (int i = 0; i <= 6; i++) {
@@ -161,6 +164,22 @@ void switchToPlaying() {
     drawDot(j, PLAYFIELD_BOTTOM, ON_STATE);
   }
   newBlock();
+
+  if (0) { //add lines for debug
+    //add lines
+    for (int i = 0; i <= 11; i++) {
+      for (int j = 0; j <= 4; j++) {
+        playfield[j][i] = 1;
+      }
+    }
+
+    for (int a = 3; a <= 12; a++) {
+      for (int b = 0; b <= 112; b++) {
+        if (playfield[b][a] == 0) { drawDot(b, a, OFF_STATE); }
+        if (playfield[b][a] == 1) { drawDot(b, a, ON_STATE); }
+      }
+    }
+  }
 }
 
 void fillScreen() {
@@ -183,21 +202,20 @@ void clearScreen() {
 void newBlock() {
   int linesCleared = 0;
   // clear lines
-  for (int i = 0; i <= 112; i++) {
+  for (int i = 0; i <= 112; i++) {  //all rows
     int lineCount = 0;
-    for (int j = 3; j <= 12; j++) {
+    for (int j = 3; j <= 12; j++) {  //every dot
       if (playfield[i][j] == 1) { lineCount++; }
     }
     if (lineCount == 10) {  // full line detected
       // clear line + update playfield
-      linesCleared = 1;
-      for (int k = 3; k <= 12; k++) {
-        drawDot(i, k, OFF_STATE);
-        delay(100);
-        playfield[i][k] = 0;  // <--- not needed?
+      linesCleared++;
+      for (int k = 3; k <= 12; k++) {  //animate line clear
+        drawDot(i + linesCleared - 1, k, OFF_STATE);
+        delay(50);
+        //playfield[i][k] = 0;  // <--- not needed?
       }
       // squash playfield
-
       for (int cl = i; cl <= 112; cl++) {
         for (int m = 3; m <= 12; m++) {
           playfield[cl][m] = playfield[cl + 1][m];
@@ -220,7 +238,7 @@ void newBlock() {
   blockType = random(6);
   blockRotation = random(3);
 
-  blockX = 20;
+  blockX = 50;
   blockY = 7;
 
 
@@ -252,7 +270,7 @@ int detectPlayfieldCollisionSide() {
       if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  // detect playfield
     }
   }
-  Serial.println("detecting");
+
   return detected;
 }
 
@@ -267,7 +285,7 @@ int detectPlayfieldCollisionRotate() {
       if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  // detect playfield
     }
   }
-  //Serial.println("detecting");
+
   return detected;
 }
 
@@ -374,15 +392,33 @@ void loop() {
         oldblockY = blockY;
         oldblockRotation = blockRotation;
 
-        if (exbutton > 0) {                          //any button pressed
-          if (exbutton == 1 and oldExbutton != 1) {  // Button A; Rotate
-            blockRotation++;
+        if (exbutton > 0) {  //any button pressed
+          if (exbutton == 3 and oldExbutton != 3) {
             turnOffOldblock();
-            if (blockRotation == 4) { blockRotation = 0; }
-            if (detectPlayfieldCollisionRotate() == 1) {
-              blockRotation--;
-              if (blockRotation == -1) { blockRotation = 3; }
+            while (detectPlayfieldCollision() == 0) {
+
+              // if block collides with playfield, move back up and convert to playfield
+              blockX--;
             }
+            blockX++;
+            for (int i = 0; i <= 15; i++) {
+              if (bitRead(blocks[blockType][blockRotation], i)) { playfield[i % 4 + blockX][i / 4 + blockY] = 1; }
+            }
+
+            // draw Block
+
+            for (int i = 0; i <= 15; i++) {
+              if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
+            }
+
+
+            newBlock();
+          }
+
+          if (exbutton == 1 and oldExbutton != 1) {  // Button A; Rotate
+            blockRotation = (blockRotation + 1) % 4;
+            turnOffOldblock();
+            if (detectPlayfieldCollisionRotate() == 1) { blockRotation = (blockRotation - 1) % 4; }
           }
 
           if (exbutton == 4 and oldExbutton != 4) {  // Button Up
@@ -403,15 +439,14 @@ void loop() {
           downWaiter = 0;
           blockX--;
 
-          if (detectPlayfieldCollision() == 1) {
-            // if block collides with playfield, move back up and convert to playfield
+          if (detectPlayfieldCollision() == 1) {  // if block collides with playfield, move back up and convert to playfield
             blockX++;
-            //drawblock
+            //convert block to playfield
             for (int i = 0; i <= 15; i++) {
               if (bitRead(blocks[blockType][blockRotation], i)) { playfield[i % 4 + blockX][i / 4 + blockY] = 1; }
             }
             newBlock();
-            
+
           } else {
             turnOffOldblock();
           }
@@ -421,33 +456,27 @@ void loop() {
         }
 
         // draw Block
-        if(gamestate == 1){
-        for (int i = 0; i <= 15; i++) {
-           if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
-        }}
+        if (gamestate == 1) {
+          for (int i = 0; i <= 15; i++) {
+            if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
+          }
+        }
         break;
 
 
       case 0:  //splashscreen
-
-        if (exbutton > 0 and exbutton < 6) {
-          oldExbutton = 0;
-          exbutton = 0;
-          switchToPlaying();
-        }
-
+        if (exbutton > 0 and exbutton < 6) { switchToPlaying(); }
         break;
-      case 2:                                                        //player is dead
-        if (gamestate == 2 and exbutton == 6) { switchToSplash(); }  // reset fron game over
+
+      case 2:                                     //player is dead
+        if (exbutton == 6) { switchToSplash(); }  // reset from game over
         break;
     }
-        oldExbutton = exbutton;
-        exbutton = 0;
+    oldExbutton = exbutton;
+    exbutton = 0;
 
-        delay(5);
-        waiter = 0;
-    
-
+    delay(5);
+    waiter = 0;
   } else {
     waiter++;
   }
