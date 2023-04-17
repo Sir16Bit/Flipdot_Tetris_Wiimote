@@ -70,13 +70,13 @@ int downWaiter = 0;
 
 
 
-int gameover[28] = { 0b0011110000111000, 0b1100011011111110, 0b0011111001110011, 0b0111111101111110,
-                     0b0110000001111100, 0b1110111011100000, 0b0111001101110011, 0b0111000001110011,
-                     0b1110000011100110, 0b1111111011100000, 0b0111001101110011, 0b0111000001110011,
-                     0b1110111011100110, 0b1111111011111100, 0b0111001101110011, 0b0111111001110110,
-                     0b1110011011111110, 0b1101011011100000, 0b0111001100110110, 0b0111000001111100,
-                     0b0110011011100110, 0b1100011011100000, 0b0111001100011100, 0b0111000001110110,
-                     0b0011111011100110, 0b1100011011111110, 0b0011111000001000, 0b0111111101110011 };
+int gameover[7][4] = { {0b0011110000111000, 0b1100011011111110, 0b0011111001110011, 0b0111111101111110},
+                     {0b0110000001111100, 0b1110111011100000, 0b0111001101110011, 0b0111000001110011},
+                     {0b1110000011100110, 0b1111111011100000, 0b0111001101110011, 0b0111000001110011},
+                     {0b1110111011100110, 0b1111111011111100, 0b0111001101110011, 0b0111111001110110},
+                     {0b1110011011111110, 0b1101011011100000, 0b0111001100110110, 0b0111000001111100},
+                     {0b0110011011100110, 0b1100011011100000, 0b0111001100011100, 0b0111000001110110},
+                     {0b0011111011100110, 0b1100011011111110, 0b0011111000001000, 0b0111111101110011 }};
 
 
 
@@ -142,6 +142,22 @@ void turnOffOldblock() {
     if (bitRead(blocks[blockType][oldblockRotation], i)) { drawDot(i % 4 + oldblockX, i / 4 + oldblockY, OFF_STATE); }
   }
 }
+
+
+void switchToDeath() {
+  gamestate = 2;
+  clearScreen();
+  delay(500);
+
+  // draw Block
+
+  for (int j = 0; j <= 63; j++) {
+    for (int i = 0; i <= 6; i++) {
+      if (bitRead(gameover[i][3-j/16], j%16)) { drawDot(j+25, i+4, ON_STATE); }
+    }
+  }
+}
+
 void switchToPlaying() {
   Serial.println("goto playing");
   gamestate = 1;
@@ -221,8 +237,7 @@ void newBlock() {
 
   if (detectPlayfieldCollision() == 1) {
     // if block collides with playfield, trigger death
-    gamestate = 2;
-    fillScreen();
+    switchToDeath();
   }
 }
 int detectPlayfieldCollision() {
@@ -431,16 +446,14 @@ void loop() {
         }
       }
       */
-
-
     }
 
-if (gamestate == 1) {
+    if (gamestate == 1) {
       // draw Block
       for (int i = 0; i <= 15; i++) {
         if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
       }
-}
+    }
 
     if (gamestate == 0) {  // start game
       if (exbutton > 0 and exbutton < 6) {
