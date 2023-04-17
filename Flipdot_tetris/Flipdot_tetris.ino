@@ -7,14 +7,21 @@ Todo:
 - death (collision on new block)
 - Fixed: Bug: wobbly dots
 - Fixed: Bug: slowdown after ~10 blocks
-- block dissapears when line clearing
+fixed - block dissapears when line clearing
 - movement too fast (wait before repeating)
 - rotation too fast (only rotate once per press)
-- Bug: rotation causes ghosting
+- fixed - Bug: rotation causes ghosting
+- Bug: ghost block visible on splash after playing
 - score
 
 - Request: show next block chasing
 - Request: Show pixelbar logo when standby
+
+rotation sometimes skips timout when holding down button
+
+multiple line clear animations is wrong
+bug block goes invisible when moving while locking (not fixed but not a problem with movement timeout)
+movement needs timeout + repeating (now only has timeout)
 
 
 
@@ -47,7 +54,7 @@ static long last_ms = 0;
 static int num_run = 0, num_updates = 0;
 int playfield[112][16];
 int exbutton = 0;
-int lastbutton = 0;
+int oldExbutton = 0;
 
 int gamestate = 0;  // 0 = splash, 1 = playing, 2 = dead
 int blockX = 50;
@@ -55,6 +62,8 @@ int blockY = 7;
 
 int oldblockX = 0;
 int oldblockY = 0;
+int oldblockRotation = 0;
+
 int downWaiter = 0;
 
 
@@ -122,7 +131,7 @@ void switchToSplash() {
   }
   clearScreen();
   drawLogo();
-  lastbutton = 0;
+  oldExbutton = 0;
   exbutton = 0;
 }
 
@@ -130,13 +139,13 @@ void turnOffOldblock() {
 
   // turn off old block
   for (int i = 0; i <= 15; i++) {
-    if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + oldblockX, i / 4 + oldblockY, OFF_STATE); }
+    if (bitRead(blocks[blockType][oldblockRotation], i)) { drawDot(i % 4 + oldblockX, i / 4 + oldblockY, OFF_STATE); }
   }
 }
 void switchToPlaying() {
   Serial.println("goto playing");
   gamestate = 1;
-  lastbutton = 0;
+  oldExbutton = 0;
   exbutton = 0;
   fillScreen();
   delay(500);
@@ -191,221 +200,230 @@ void newBlock() {
       }
       i--;
     }
-
   }
 
-
+  if (linesCleared) {
     for (int a = 3; a <= 12; a++) {
       for (int b = 0; b <= 112; b++) {
         if (playfield[b][a] == 0) { drawDot(b, a, OFF_STATE); }
         if (playfield[b][a] == 1) { drawDot(b, a, ON_STATE); }
       }
     }
+  }
 
 
+  blockType = random(6);
+  blockRotation = random(3);
+
+  blockX = 20;
+  blockY = 7;
 
 
-    blockType = random(6);
-    blockRotation = random(3);
-
-    blockX = 20;
-    blockY = 7;
-  
+  if (detectPlayfieldCollision() == 1) {
+    // if block collides with playfield, trigger death
+    gamestate = 2;
+    fillScreen();
+  }
 }
-  int detectPlayfieldCollision() {
-    int detected = 0;
-    for (int i = 0; i <= 15; i++) {
+int detectPlayfieldCollision() {
+  int detected = 0;
+  for (int i = 0; i <= 15; i++) {
 
-      if (bitRead(blocks[blockType][blockRotation], i)) {
-        if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  // detect playfield
-        if (i % 4 + blockX == -1) { detected = 1; }                            // detect Right
-      }
-    }
-    Serial.println("detecting");
-    return detected;
-  }
-
-  int detectPlayfieldCollisionSide() {
-    int detected = 0;
-    for (int i = 0; i <= 15; i++) {
-
-      if (bitRead(blocks[blockType][blockRotation], i)) {
-        if (i / 4 + blockY == 2) { detected = 1; }                             // detect top
-        if (i / 4 + blockY == 13) { detected = 1; }                            // detect bottom
-        if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  // detect playfield
-      }
-    }
-    Serial.println("detecting");
-    return detected;
-  }
-
-  int detectPlayfieldCollisionRotate() {
-    int detected = 0;
-    for (int i = 0; i <= 15; i++) {
-
-      if (bitRead(blocks[blockType][blockRotation], i)) {
-        if (i / 4 + blockY == 2) { detected = 1; }   // detect top
-        if (i / 4 + blockY == 13) { detected = 1; }  // detect bottom
-        if (i % 4 + blockX == -1) { detected = 1; }
-        if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  // detect playfield
-      }
-    }
-    //Serial.println("detecting");
-    return detected;
-  }
-
-  void drawLogo() {
-    for (int i = 0; i < 21; i++) {
-      drawDot(60 - i, 4, logo1[i]);
-      drawDot(60 - i, 5, logo2[i]);
-      drawDot(60 - i, 6, logo3[i]);
-      drawDot(60 - i, 7, logo4[i]);
-      drawDot(60 - i, 8, logo5[i]);
+    if (bitRead(blocks[blockType][blockRotation], i)) {
+      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  // detect playfield
+      if (i % 4 + blockX == -1) { detected = 1; }                            // detect Right
     }
   }
+  Serial.println("detecting");
+  return detected;
+}
 
-  void setup() {
-    Serial.begin(115200);
-    Serial.println("ESP32Wiimote");
+int detectPlayfieldCollisionSide() {
+  int detected = 0;
+  for (int i = 0; i <= 15; i++) {
 
-    wiimote.init();
-    if (!logging) wiimote.addFilter(ACTION_IGNORE, FILTER_ACCEL);  // optional
-    Serial.println("Started");
-    last_ms = millis();
+    if (bitRead(blocks[blockType][blockRotation], i)) {
+      if (i / 4 + blockY == 2) { detected = 1; }                             // detect top
+      if (i / 4 + blockY == 13) { detected = 1; }                            // detect bottom
+      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  // detect playfield
+    }
+  }
+  Serial.println("detecting");
+  return detected;
+}
 
-    Serial2.begin(74880);
-    clearScreen();
-    switchToSplash();
+int detectPlayfieldCollisionRotate() {
+  int detected = 0;
+  for (int i = 0; i <= 15; i++) {
+
+    if (bitRead(blocks[blockType][blockRotation], i)) {
+      if (i / 4 + blockY == 2) { detected = 1; }   // detect top
+      if (i / 4 + blockY == 13) { detected = 1; }  // detect bottom
+      if (i % 4 + blockX == -1) { detected = 1; }
+      if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  // detect playfield
+    }
+  }
+  //Serial.println("detecting");
+  return detected;
+}
+
+void drawLogo() {
+  for (int i = 0; i < 21; i++) {
+    drawDot(60 - i, 4, logo1[i]);
+    drawDot(60 - i, 5, logo2[i]);
+    drawDot(60 - i, 6, logo3[i]);
+    drawDot(60 - i, 7, logo4[i]);
+    drawDot(60 - i, 8, logo5[i]);
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("ESP32Wiimote");
+
+  wiimote.init();
+  if (!logging) wiimote.addFilter(ACTION_IGNORE, FILTER_ACCEL);  // optional
+  Serial.println("Started");
+  last_ms = millis();
+
+  Serial2.begin(74880);
+  clearScreen();
+  switchToSplash();
+}
+
+void loop() {
+
+  wiimote.task();
+  num_run++;
+
+  if (wiimote.available() > 0) {
+    ButtonState button = wiimote.getButtonState();
+    AccelState accel = wiimote.getAccelState();
+    NunchukState nunchuk = wiimote.getNunchukState();
+
+    num_updates++;
+    if (logging) {
+      char ca = (button & BUTTON_A) ? 'A' : '.';
+      char cb = (button & BUTTON_B) ? 'B' : '.';
+      char cc = (button & BUTTON_C) ? 'C' : '.';
+      char cz = (button & BUTTON_Z) ? 'Z' : '.';
+      char c1 = (button & BUTTON_ONE) ? '1' : '.';
+      char c2 = (button & BUTTON_TWO) ? '2' : '.';
+      char cminus = (button & BUTTON_MINUS) ? '-' : '.';
+      char cplus = (button & BUTTON_PLUS) ? '+' : '.';
+      char chome = (button & BUTTON_HOME) ? 'H' : '.';
+      char cleft = (button & BUTTON_LEFT) ? '<' : '.';
+      char cright = (button & BUTTON_RIGHT) ? '>' : '.';
+      char cup = (button & BUTTON_UP) ? '^' : '.';
+      char cdown = (button & BUTTON_DOWN) ? 'v' : '.';
+
+      if (button & BUTTON_LEFT) { exbutton = 2; }
+      if (button & BUTTON_RIGHT) { exbutton = 3; }
+      if (button & BUTTON_UP) { exbutton = 4; }
+      if (button & BUTTON_DOWN) { exbutton = 5; }
+      if (button & BUTTON_HOME) { exbutton = 6; }
+      // Serial.println(button);
+      // Serial.println(BUTTON_A);
+      // Serial.println(button & BUTTON_A);
+      if (button & BUTTON_A) { exbutton = 1; }
+
+      // Serial.println(ca);
+      // Serial.println();
+
+      // Serial.printf("button: %05x = ", (int)button);
+      // Serial.print(ca);
+      // Serial.print(cb);
+      // Serial.print(cc);
+      // Serial.print(cz);
+      // Serial.print(c1);
+      // Serial.print(c2);
+      // Serial.print(cminus);
+      // Serial.print(chome);
+      // Serial.print(cplus);
+      // Serial.print(cleft);
+      // Serial.print(cright);
+      // Serial.print(cup);
+      // Serial.print(cdown);
+      // Serial.printf(", wiimote.axis: %3d/%3d/%3d", accel.xAxis, accel.yAxis,
+      // accel.zAxis); Serial.printf(", nunchuk.axis: %3d/%3d/%3d",
+      // nunchuk.xAxis, nunchuk.yAxis, nunchuk.zAxis); Serial.printf(",
+      // nunchuk.stick: %3d/%3d\n", nunchuk.xStick, nunchuk.yStick);
+    }
   }
 
-  void loop() {
-
-    wiimote.task();
-    num_run++;
-
-    if (wiimote.available() > 0) {
-      ButtonState button = wiimote.getButtonState();
-      AccelState accel = wiimote.getAccelState();
-      NunchukState nunchuk = wiimote.getNunchukState();
-
-      num_updates++;
-      if (logging) {
-        char ca = (button & BUTTON_A) ? 'A' : '.';
-        char cb = (button & BUTTON_B) ? 'B' : '.';
-        char cc = (button & BUTTON_C) ? 'C' : '.';
-        char cz = (button & BUTTON_Z) ? 'Z' : '.';
-        char c1 = (button & BUTTON_ONE) ? '1' : '.';
-        char c2 = (button & BUTTON_TWO) ? '2' : '.';
-        char cminus = (button & BUTTON_MINUS) ? '-' : '.';
-        char cplus = (button & BUTTON_PLUS) ? '+' : '.';
-        char chome = (button & BUTTON_HOME) ? 'H' : '.';
-        char cleft = (button & BUTTON_LEFT) ? '<' : '.';
-        char cright = (button & BUTTON_RIGHT) ? '>' : '.';
-        char cup = (button & BUTTON_UP) ? '^' : '.';
-        char cdown = (button & BUTTON_DOWN) ? 'v' : '.';
-
-        if (button & BUTTON_LEFT) { exbutton = 2; }
-        if (button & BUTTON_RIGHT) { exbutton = 3; }
-        if (button & BUTTON_UP) { exbutton = 4; }
-        if (button & BUTTON_DOWN) { exbutton = 5; }
-        if (button & BUTTON_HOME) { exbutton = 6; }
-        // Serial.println(button);
-        // Serial.println(BUTTON_A);
-        // Serial.println(button & BUTTON_A);
-        if (button & BUTTON_A) { exbutton = 1; }
-
-        // Serial.println(ca);
-        // Serial.println();
-
-        // Serial.printf("button: %05x = ", (int)button);
-        // Serial.print(ca);
-        // Serial.print(cb);
-        // Serial.print(cc);
-        // Serial.print(cz);
-        // Serial.print(c1);
-        // Serial.print(c2);
-        // Serial.print(cminus);
-        // Serial.print(chome);
-        // Serial.print(cplus);
-        // Serial.print(cleft);
-        // Serial.print(cright);
-        // Serial.print(cup);
-        // Serial.print(cdown);
-        // Serial.printf(", wiimote.axis: %3d/%3d/%3d", accel.xAxis, accel.yAxis,
-        // accel.zAxis); Serial.printf(", nunchuk.axis: %3d/%3d/%3d",
-        // nunchuk.xAxis, nunchuk.yAxis, nunchuk.zAxis); Serial.printf(",
-        // nunchuk.stick: %3d/%3d\n", nunchuk.xStick, nunchuk.yStick);
-      }
+  if (!logging) {
+    long ms = millis();
+    if (ms - last_ms >= 1000) {
+      Serial.printf("Run %d times per second with %d updates\n", num_run,
+                    num_updates);
+      num_run = num_updates = 0;
+      last_ms += 1000;
     }
+  }
 
-    if (!logging) {
-      long ms = millis();
-      if (ms - last_ms >= 1000) {
-        Serial.printf("Run %d times per second with %d updates\n", num_run,
-                      num_updates);
-        num_run = num_updates = 0;
-        last_ms += 1000;
-      }
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-    //// Tetris game section
-    if (waiter == 2000) {
-      // wait for input to start game
-      if (gamestate == 1) {
-        oldblockX = blockX;
-        oldblockY = blockY;
+  //////////////////////////////////////////////////////////////////////////
+  //// Tetris game section
+  if (waiter == 2000) {
 
 
 
-        if (exbutton > 0) {
 
-          if (exbutton == 1) {  // Button A; Rotate
-            blockRotation++;
-            turnOffOldblock();
-            if (blockRotation == 4) { blockRotation = 0; }
-            if (detectPlayfieldCollisionRotate() == 1) {
-              blockRotation--;
-              if (blockRotation == -1) { blockRotation = 3; }
-            }
+
+    // wait for input to start game
+    if (gamestate == 1) {
+      oldblockX = blockX;
+      oldblockY = blockY;
+      oldblockRotation = blockRotation;
+
+
+      if (exbutton > 0) {
+
+        if (exbutton == 1 and oldExbutton != 1) {  // Button A; Rotate
+          blockRotation++;
+          turnOffOldblock();
+          if (blockRotation == 4) { blockRotation = 0; }
+          if (detectPlayfieldCollisionRotate() == 1) {
+            blockRotation--;
+            if (blockRotation == -1) { blockRotation = 3; }
           }
-
-          if (exbutton == 4) {  // Button Up
-            blockY--;
-            turnOffOldblock();
-            if (detectPlayfieldCollisionSide() == 1) { blockY++; }
-          }
-
-          if (exbutton == 5) {  // Button Down
-            blockY++;
-            turnOffOldblock();
-            if (detectPlayfieldCollisionSide() == 1) { blockY--; }
-          }
-          if (exbutton == 6) { switchToSplash(); }  // reset
         }
 
-        if (downWaiter >= 4) {  // Auto move block down
-          downWaiter = 0;
-          blockX--;
+        if (exbutton == 4 and oldExbutton != 4) {  // Button Up
+          blockY--;
+          turnOffOldblock();
+          if (detectPlayfieldCollisionSide() == 1) { blockY++; }
+        }
 
-          if (detectPlayfieldCollision() == 1) {
-            // if block collides with playfield, move back up and convert to playfield
-            blockX++;
-            for (int i = 0; i <= 15; i++) {
-              if (bitRead(blocks[blockType][blockRotation], i)) { playfield[i % 4 + blockX][i / 4 + blockY] = 1; }
-            }
-            newBlock();
-          } else {
+        if (exbutton == 5 and oldExbutton != 5) {  // Button Down
+          blockY++;
+          turnOffOldblock();
+          if (detectPlayfieldCollisionSide() == 1) { blockY--; }
+        }
+        if (exbutton == 6) { switchToSplash(); }  // reset
+      }
 
-            turnOffOldblock();
+      if (downWaiter >= 4) {  // Auto move block down
+        downWaiter = 0;
+        blockX--;
+
+        if (detectPlayfieldCollision() == 1) {
+          // if block collides with playfield, move back up and convert to playfield
+          blockX++;
+          for (int i = 0; i <= 15; i++) {
+            if (bitRead(blocks[blockType][blockRotation], i)) { playfield[i % 4 + blockX][i / 4 + blockY] = 1; }
           }
-
+          newBlock();
         } else {
 
-          downWaiter++;
+          turnOffOldblock();
         }
 
-        /*
+      } else {
+
+        downWaiter++;
+      }
+
+      /*
       // update playfield
       for (int i = 0; i <= 12; i++) {
         for (int j = 0; j <= 112; j++) {
@@ -414,25 +432,33 @@ void newBlock() {
       }
       */
 
-        // draw Block
-        for (int i = 0; i <= 15; i++) {
-          if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
-        }
-      }
-      if (gamestate == 0) {  // start game
-        if (exbutton > 0 and exbutton < 6) {
-          lastbutton = 0;
-          exbutton = 0;
-          switchToPlaying();
-        }
-      }
 
-      lastbutton = 0;
-      exbutton = 0;
-
-      delay(5);
-      waiter = 0;
-    } else {
-      waiter++;
     }
+
+if (gamestate == 1) {
+      // draw Block
+      for (int i = 0; i <= 15; i++) {
+        if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
+      }
+}
+
+    if (gamestate == 0) {  // start game
+      if (exbutton > 0 and exbutton < 6) {
+        oldExbutton = 0;
+        exbutton = 0;
+        switchToPlaying();
+      }
+    }
+
+
+    if (gamestate == 2 and exbutton == 6) { switchToSplash(); }  // reset fron game over
+
+    oldExbutton = exbutton;
+    exbutton = 0;
+
+    delay(5);
+    waiter = 0;
+  } else {
+    waiter++;
   }
+}
