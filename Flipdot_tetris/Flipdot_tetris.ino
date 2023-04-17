@@ -3,34 +3,23 @@
 /*
 Todo:
 
-- Redrawing entire playfield is slow (only draw last block)
-- death (collision on new block)
-- Fixed: Bug: wobbly dots
-- Fixed: Bug: slowdown after ~10 blocks
-fixed - block dissapears when line clearing
-- movement too fast (wait before repeating)
-- rotation too fast (only rotate once per press)
-- fixed - Bug: rotation causes ghosting
-- Bug: ghost block visible on splash after playing
-- score
+
+
+
+features:
+- add dead drop
+- add: score
+- convert gamestates to switch/case
+- movement needs timeout + repeating (now only has timeout)
+
+
+- Bug: rotation sometimes skips timout when holding down button
+- Bug multiple line clear animations is wrong
+- Bug block goes invisible when moving while locking (not fixed but not a problem with movement timeout)
+
 
 - Request: show next block chasing
 - Request: Show pixelbar logo when standby
-
-rotation sometimes skips timout when holding down button
-
-multiple line clear animations is wrong
-bug block goes invisible when moving while locking (not fixed but not a problem with movement timeout)
-movement needs timeout + repeating (now only has timeout)
-
-
-
-notes:
-Done: Move undraw to not 'collide with bottom' then playfield update is not needed. 
-
-Last button should be oldExButton
-
-
 
 */
 
