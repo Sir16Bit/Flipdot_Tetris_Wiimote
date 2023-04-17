@@ -9,7 +9,7 @@ Todo:
 features:
 - add dead drop
 - add: score
-- convert gamestates to switch/case
+- done: convert gamestates to switch/case
 - movement needs timeout + repeating (now only has timeout)
 
 
@@ -59,13 +59,13 @@ int downWaiter = 0;
 
 
 
-int gameover[7][4] = { {0b0011110000111000, 0b1100011011111110, 0b0011111001110011, 0b0111111101111110},
-                     {0b0110000001111100, 0b1110111011100000, 0b0111001101110011, 0b0111000001110011},
-                     {0b1110000011100110, 0b1111111011100000, 0b0111001101110011, 0b0111000001110011},
-                     {0b1110111011100110, 0b1111111011111100, 0b0111001101110011, 0b0111111001110110},
-                     {0b1110011011111110, 0b1101011011100000, 0b0111001100110110, 0b0111000001111100},
-                     {0b0110011011100110, 0b1100011011100000, 0b0111001100011100, 0b0111000001110110},
-                     {0b0011111011100110, 0b1100011011111110, 0b0011111000001000, 0b0111111101110011 }};
+int gameover[7][4] = { { 0b0011110000111000, 0b1100011011111110, 0b0011111001110011, 0b0111111101111110 },
+                       { 0b0110000001111100, 0b1110111011100000, 0b0111001101110011, 0b0111000001110011 },
+                       { 0b1110000011100110, 0b1111111011100000, 0b0111001101110011, 0b0111000001110011 },
+                       { 0b1110111011100110, 0b1111111011111100, 0b0111001101110011, 0b0111111001110110 },
+                       { 0b1110011011111110, 0b1101011011100000, 0b0111001100110110, 0b0111000001111100 },
+                       { 0b0110011011100110, 0b1100011011100000, 0b0111001100011100, 0b0111000001110110 },
+                       { 0b0011111011100110, 0b1100011011111110, 0b0011111000001000, 0b0111111101110011 } };
 
 
 
@@ -138,11 +138,11 @@ void switchToDeath() {
   clearScreen();
   delay(500);
 
-  // draw Block
+ 
 
   for (int j = 0; j <= 63; j++) {
     for (int i = 0; i <= 6; i++) {
-      if (bitRead(gameover[i][3-j/16], j%16)) { drawDot(j+25, i+4, ON_STATE); }
+      if (bitRead(gameover[i][3 - j / 16], j % 16)) { drawDot(j + 25, i + 4, ON_STATE); }
     }
   }
 }
@@ -368,98 +368,86 @@ void loop() {
   //////////////////////////////////////////////////////////////////////////
   //// Tetris game section
   if (waiter == 2000) {
+    switch (gamestate) {
+      case 1:  //playing
+        oldblockX = blockX;
+        oldblockY = blockY;
+        oldblockRotation = blockRotation;
 
-
-
-
-
-    // wait for input to start game
-    if (gamestate == 1) {
-      oldblockX = blockX;
-      oldblockY = blockY;
-      oldblockRotation = blockRotation;
-
-
-      if (exbutton > 0) {
-
-        if (exbutton == 1 and oldExbutton != 1) {  // Button A; Rotate
-          blockRotation++;
-          turnOffOldblock();
-          if (blockRotation == 4) { blockRotation = 0; }
-          if (detectPlayfieldCollisionRotate() == 1) {
-            blockRotation--;
-            if (blockRotation == -1) { blockRotation = 3; }
+        if (exbutton > 0) {                          //any button pressed
+          if (exbutton == 1 and oldExbutton != 1) {  // Button A; Rotate
+            blockRotation++;
+            turnOffOldblock();
+            if (blockRotation == 4) { blockRotation = 0; }
+            if (detectPlayfieldCollisionRotate() == 1) {
+              blockRotation--;
+              if (blockRotation == -1) { blockRotation = 3; }
+            }
           }
-        }
 
-        if (exbutton == 4 and oldExbutton != 4) {  // Button Up
-          blockY--;
-          turnOffOldblock();
-          if (detectPlayfieldCollisionSide() == 1) { blockY++; }
-        }
-
-        if (exbutton == 5 and oldExbutton != 5) {  // Button Down
-          blockY++;
-          turnOffOldblock();
-          if (detectPlayfieldCollisionSide() == 1) { blockY--; }
-        }
-        if (exbutton == 6) { switchToSplash(); }  // reset
-      }
-
-      if (downWaiter >= 4) {  // Auto move block down
-        downWaiter = 0;
-        blockX--;
-
-        if (detectPlayfieldCollision() == 1) {
-          // if block collides with playfield, move back up and convert to playfield
-          blockX++;
-          for (int i = 0; i <= 15; i++) {
-            if (bitRead(blocks[blockType][blockRotation], i)) { playfield[i % 4 + blockX][i / 4 + blockY] = 1; }
+          if (exbutton == 4 and oldExbutton != 4) {  // Button Up
+            blockY--;
+            turnOffOldblock();
+            if (detectPlayfieldCollisionSide() == 1) { blockY++; }
           }
-          newBlock();
+
+          if (exbutton == 5 and oldExbutton != 5) {  // Button Down
+            blockY++;
+            turnOffOldblock();
+            if (detectPlayfieldCollisionSide() == 1) { blockY--; }
+          }
+          if (exbutton == 6) { switchToSplash(); }  // reset
+        }
+
+        if (downWaiter >= 4) {  // Auto move block down
+          downWaiter = 0;
+          blockX--;
+
+          if (detectPlayfieldCollision() == 1) {
+            // if block collides with playfield, move back up and convert to playfield
+            blockX++;
+            //drawblock
+            for (int i = 0; i <= 15; i++) {
+              if (bitRead(blocks[blockType][blockRotation], i)) { playfield[i % 4 + blockX][i / 4 + blockY] = 1; }
+            }
+            newBlock();
+            
+          } else {
+            turnOffOldblock();
+          }
+
         } else {
-
-          turnOffOldblock();
+          downWaiter++;
         }
 
-      } else {
+        // draw Block
+        if(gamestate == 1){
+        for (int i = 0; i <= 15; i++) {
+           if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
+        }}
+        break;
 
-        downWaiter++;
-      }
 
-      /*
-      // update playfield
-      for (int i = 0; i <= 12; i++) {
-        for (int j = 0; j <= 112; j++) {
-          if (playfield[j][i] == 1) { drawDot(j, i, ON_STATE); }
+      case 0:  //splashscreen
+
+        if (exbutton > 0 and exbutton < 6) {
+          oldExbutton = 0;
+          exbutton = 0;
+          switchToPlaying();
         }
-      }
-      */
-    }
 
-    if (gamestate == 1) {
-      // draw Block
-      for (int i = 0; i <= 15; i++) {
-        if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
-      }
+        break;
+      case 2:                                                        //player is dead
+        if (gamestate == 2 and exbutton == 6) { switchToSplash(); }  // reset fron game over
+        break;
     }
-
-    if (gamestate == 0) {  // start game
-      if (exbutton > 0 and exbutton < 6) {
-        oldExbutton = 0;
+        oldExbutton = exbutton;
         exbutton = 0;
-        switchToPlaying();
-      }
-    }
 
+        delay(5);
+        waiter = 0;
+    
 
-    if (gamestate == 2 and exbutton == 6) { switchToSplash(); }  // reset fron game over
-
-    oldExbutton = exbutton;
-    exbutton = 0;
-
-    delay(5);
-    waiter = 0;
   } else {
     waiter++;
   }
