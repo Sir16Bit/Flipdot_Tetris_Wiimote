@@ -418,11 +418,11 @@ void loop() {
             newBlock();
           }
 
-          
-          
-          
+
+
+
           if (exbutton == 8 and oldExbutton != 8) {  // Button one; Rotate
-            blockRotation--; if(blockRotation == -1){blockRotation = 3;} 
+            blockRotation = (blockRotation - 1 + 4) % 4;
             turnOffOldblock();
             if (detectPlayfieldCollisionRotate() == 1) { blockRotation = (blockRotation + 1) % 4; }
           }
@@ -432,7 +432,7 @@ void loop() {
           if (exbutton == 7 and oldExbutton != 7) {  // Button two; Rotate
             blockRotation = (blockRotation + 1) % 4;
             turnOffOldblock();
-            if (detectPlayfieldCollisionRotate() == 1) { blockRotation--; if(blockRotation == -1){blockRotation = 3;} }
+            if (detectPlayfieldCollisionRotate() == 1) { blockRotation = (blockRotation - 1 + 4) % 4; }
           }
 
           if (exbutton == 4 and oldExbutton != 4) {  // Button Up
