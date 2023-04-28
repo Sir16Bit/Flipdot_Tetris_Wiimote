@@ -3,14 +3,10 @@
 /*
 Todo:
 
-
-
-
 features:
 
 - add: score
 - movement needs timeout + repeating (now only has timeout)
-
 
 - Bug: rotation sometimes skips timout when holding down button
 - Bug block goes invisible when moving while locking
@@ -56,10 +52,6 @@ int oldblockRotation = 0;
 
 int downWaiter = 0;
 
-
-
-
-
 int gameover[7][4] = { { 0b0011110000111000, 0b1100011011111110, 0b0011111001110011, 0b0111111101111110 },
                        { 0b0110000001111100, 0b1110111011100000, 0b0111001101110011, 0b0111000001110011 },
                        { 0b1110000011100110, 0b1111111011100000, 0b0111001101110011, 0b0111000001110011 },
@@ -71,13 +63,6 @@ int gameover[7][4] = { { 0b0011110000111000, 0b1100011011111110, 0b0011111001110
 
 
 
-
-int logo1[] = { 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1 };
-int logo2[] = { 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0 };
-int logo3[] = { 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1 };
-int logo4[] = { 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1 };
-int logo5[] = { 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1 };
-
 // Super Rotation System        bar J L Block S T Z
 int blocks[7][4] = { { 0b0000111100000000, 0b0010001000100010, 0b0000000011110000, 0b0100010001000100 },
                      { 0b1000111000000000, 0b0110010001000000, 0b0000111000100000, 0b0100010011000000 },
@@ -88,22 +73,22 @@ int blocks[7][4] = { { 0b0000111100000000, 0b0010001000100010, 0b000000001111000
                      { 0b1100011000000000, 0b0010011001000000, 0b0000110001100000, 0b0100110010000000 } };
 
 
-int arraytest[16][14] = { { 0b11111110, 0b00001111, 0b10000000, 0b00011111, 0b10000111, 0b11000010, 0b00000100, 0b00110000, 0b00011111, 0b01000111, 0b00110111, 0b11000110, 0b01000011, 0b10110011 },
-                          { 0b11111110, 0b00001111, 0b10000110, 0b00011111, 0b10000111, 0b11000010, 0b00001100, 0b00100000, 0b00001111, 0b01000111, 0b00110110, 0b00001100, 0b01001011, 0b11000111 },
-                          { 0b11111110, 0b00001111, 0b10000111, 0b00011111, 0b10000111, 0b11000010, 0b00011100, 0b00100001, 0b00001111, 0b11000111, 0b00110111, 0b00011000, 0b01100101, 0b11101111 },
-                          { 0b11111110, 0b00001111, 0b10000111, 0b10011111, 0b10000111, 0b11000010, 0b00111100, 0b00100011, 0b00001111, 0b11101111, 0b00111101, 0b00011000, 0b11100101, 0b11101111 },
-                          { 0b11111110, 0b01001111, 0b10010111, 0b11011111, 0b10010111, 0b11001010, 0b00111100, 0b10100110, 0b01001111, 0b11111111, 0b00111101, 0b00011000, 0b11100101, 0b11101111 },
-                          { 0b11111110, 0b10001111, 0b10100111, 0b01111111, 0b10100111, 0b11010010, 0b01111101, 0b00111100, 0b10101111, 0b11111111, 0b00111101, 0b00011001, 0b11000101, 0b11101111 },
-                          { 0b11111110, 0b01001111, 0b10010110, 0b01111111, 0b10010111, 0b11001010, 0b11111100, 0b10111001, 0b01001111, 0b11111111, 0b11111111, 0b00011001, 0b11001001, 0b11101111 },
-                          { 0b11111110, 0b10001111, 0b10100100, 0b01111111, 0b10100111, 0b11010010, 0b01111101, 0b00110010, 0b10011111, 0b11111111, 0b11111110, 0b10011001, 0b11000011, 0b11010111 },
-                          { 0b11111110, 0b01001111, 0b10010100, 0b01111111, 0b10010111, 0b11001010, 0b00011100, 0b10100111, 0b00111111, 0b11111111, 0b11111111, 0b01101101, 0b10100111, 0b11110111 },
-                          { 0b11111111, 0b11001111, 0b11110110, 0b01111111, 0b11110111, 0b11111011, 0b11011111, 0b10101110, 0b01111111, 0b11111111, 0b11111111, 0b11010100, 0b10001111, 0b11101111 },
-                          { 0b11101111, 0b11001110, 0b11110111, 0b01110111, 0b11110111, 0b01111011, 0b11101111, 0b10111100, 0b11001111, 0b11111111, 0b11111111, 0b11101010, 0b10011111, 0b11111111 },
-                          { 0b11110111, 0b11001100, 0b11110111, 0b10011011, 0b11110110, 0b01111011, 0b11101111, 0b10111101, 0b10101111, 0b11111111, 0b11111111, 0b11110110, 0b01111111, 0b11111111 },
-                          { 0b11110111, 0b11001110, 0b11110111, 0b01011011, 0b11110111, 0b01111011, 0b11101111, 0b10111110, 0b01101110, 0b11011101, 0b11111111, 0b11111000, 0b01111111, 0b11111111 },
-                          { 0b11111011, 0b11001010, 0b11110110, 0b11011101, 0b11110111, 0b01111011, 0b11011111, 0b10101111, 0b11101110, 0b11010101, 0b11111111, 0b11111110, 0b11111111, 0b11111111 },
-                          { 0b11100000, 0b00000000, 0b10000100, 0b00010000, 0b10000000, 0b01000010, 0b00011100, 0b00110000, 0b00011100, 0b01001001, 0b11111111, 0b11111101, 0b11111111, 0b11111111 },
-                          { 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111101, 0b11111111, 0b11111111 } };
+int logoBitmap[16][14] = { { 0b11111110, 0b00001111, 0b10000000, 0b00011111, 0b10000111, 0b11000010, 0b00000100, 0b00110000, 0b00011111, 0b01000111, 0b00110111, 0b11000110, 0b01000011, 0b10110011 },
+                           { 0b11111110, 0b00001111, 0b10000110, 0b00011111, 0b10000111, 0b11000010, 0b00001100, 0b00100000, 0b00001111, 0b01000111, 0b00110110, 0b00001100, 0b01001011, 0b11000111 },
+                           { 0b11111110, 0b00001111, 0b10000111, 0b00011111, 0b10000111, 0b11000010, 0b00011100, 0b00100001, 0b00001111, 0b11000111, 0b00110111, 0b00011000, 0b01100101, 0b11101111 },
+                           { 0b11111110, 0b00001111, 0b10000111, 0b10011111, 0b10000111, 0b11000010, 0b00111100, 0b00100011, 0b00001111, 0b11101111, 0b00111101, 0b00011000, 0b11100101, 0b11101111 },
+                           { 0b11111110, 0b01001111, 0b10010111, 0b11011111, 0b10010111, 0b11001010, 0b00111100, 0b10100110, 0b01001111, 0b11111111, 0b00111101, 0b00011000, 0b11100101, 0b11101111 },
+                           { 0b11111110, 0b10001111, 0b10100111, 0b01111111, 0b10100111, 0b11010010, 0b01111101, 0b00111100, 0b10101111, 0b11111111, 0b00111101, 0b00011001, 0b11000101, 0b11101111 },
+                           { 0b11111110, 0b01001111, 0b10010110, 0b01111111, 0b10010111, 0b11001010, 0b11111100, 0b10111001, 0b01001111, 0b11111111, 0b11111111, 0b00011001, 0b11001001, 0b11101111 },
+                           { 0b11111110, 0b10001111, 0b10100100, 0b01111111, 0b10100111, 0b11010010, 0b01111101, 0b00110010, 0b10011111, 0b11111111, 0b11111110, 0b10011001, 0b11000011, 0b11010111 },
+                           { 0b11111110, 0b01001111, 0b10010100, 0b01111111, 0b10010111, 0b11001010, 0b00011100, 0b10100111, 0b00111111, 0b11111111, 0b11111111, 0b01101101, 0b10100111, 0b11110111 },
+                           { 0b11111111, 0b11001111, 0b11110110, 0b01111111, 0b11110111, 0b11111011, 0b11011111, 0b10101110, 0b01111111, 0b11111111, 0b11111111, 0b11010100, 0b10001111, 0b11101111 },
+                           { 0b11101111, 0b11001110, 0b11110111, 0b01110111, 0b11110111, 0b01111011, 0b11101111, 0b10111100, 0b11001111, 0b11111111, 0b11111111, 0b11101010, 0b10011111, 0b11111111 },
+                           { 0b11110111, 0b11001100, 0b11110111, 0b10011011, 0b11110110, 0b01111011, 0b11101111, 0b10111101, 0b10101111, 0b11111111, 0b11111111, 0b11110110, 0b01111111, 0b11111111 },
+                           { 0b11110111, 0b11001110, 0b11110111, 0b01011011, 0b11110111, 0b01111011, 0b11101111, 0b10111110, 0b01101110, 0b11011101, 0b11111111, 0b11111000, 0b01111111, 0b11111111 },
+                           { 0b11111011, 0b11001010, 0b11110110, 0b11011101, 0b11110111, 0b01111011, 0b11011111, 0b10101111, 0b11101110, 0b11010101, 0b11111111, 0b11111110, 0b11111111, 0b11111111 },
+                           { 0b11100000, 0b00000000, 0b10000100, 0b00010000, 0b10000000, 0b01000010, 0b00011100, 0b00110000, 0b00011100, 0b01001001, 0b11111111, 0b11111101, 0b11111111, 0b11111111 },
+                           { 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111101, 0b11111111, 0b11111111 } };
 
 
 
@@ -141,11 +126,22 @@ void drawDot(int col, int row, int pol) {
   Serial2.flush();
 }
 
+void drawBlock() {
+  for (int i = 0; i <= 15; i++) {
+    if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
+  }
+}
 
-void drawtest() {
+void convertToPlayfield() {
+  for (int i = 0; i <= 15; i++) {
+    if (bitRead(blocks[blockType][blockRotation], i)) { playfield[i % 4 + blockX][i / 4 + blockY] = 1; }
+  }
+}
+
+void drawLogo() {
   for (int j = 0; j <= 111; j++) {
     for (int i = 0; i <= 15; i++) {
-      if (bitRead(arraytest[i][13 - j / 8], j % 8)) { drawDot(j, 15 - i, ON_STATE); }
+      if (bitRead(logoBitmap[i][13 - j / 8], j % 8)) { drawDot(j, 15 - i, ON_STATE); }
     }
   }
 }
@@ -161,8 +157,8 @@ void switchToSplash() {
     }
   }
   clearScreen();
-  //drawLogo();
-  drawtest();
+
+  drawLogo();
   oldExbutton = 0;
   exbutton = 0;
 }
@@ -246,19 +242,17 @@ void clearScreen() {
 
 void newBlock() {
   int linesCleared = 0;
-  // clear lines
-  for (int i = 0; i <= 112; i++) {  //all rows
+  // search and clear lines
+  for (int i = 0; i <= 112; i++) { //searchplayfield for lines
     int lineCount = 0;
-    for (int j = 3; j <= 12; j++) {  //every dot
+    for (int j = 3; j <= 12; j++) {  
       if (playfield[i][j] == 1) { lineCount++; }
     }
     if (lineCount == 10) {  // full line detected
-      // clear line + update playfield
       linesCleared++;
       for (int k = 3; k <= 12; k++) {  //animate line clear
         drawDot(i + linesCleared - 1, k, OFF_STATE);
         delay(50);
-        //playfield[i][k] = 0;  // <--- not needed?
       }
       // squash playfield
       for (int cl = i; cl <= 112; cl++) {
@@ -271,6 +265,7 @@ void newBlock() {
   }
 
   if (linesCleared) {
+    //update playfield
     for (int a = 3; a <= 12; a++) {
       for (int b = 0; b <= 112; b++) {
         if (playfield[b][a] == 0) { drawDot(b, a, OFF_STATE); }
@@ -279,18 +274,13 @@ void newBlock() {
     }
   }
 
-
   blockType = random(7);
   blockRotation = random(3);
 
   blockX = 50;
   blockY = 7;
 
-
-  if (detectPlayfieldCollision() == 1) {
-    // if block collides with playfield, trigger death
-    switchToDeath();
-  }
+  if (detectPlayfieldCollision() == 1) { switchToDeath(); }  // if block collides with playfield, trigger death
 }
 int detectPlayfieldCollision() {
   int detected = 0;
@@ -324,9 +314,9 @@ int detectPlayfieldCollisionRotate() {
   for (int i = 0; i <= 15; i++) {
 
     if (bitRead(blocks[blockType][blockRotation], i)) {
-      if (i / 4 + blockY == 2) { detected = 1; }   // detect top
-      if (i / 4 + blockY == 13) { detected = 1; }  // detect bottom
-      if (i % 4 + blockX == -1) { detected = 1; }
+      if (i / 4 + blockY == 2) { detected = 1; }                             // detect top
+      if (i / 4 + blockY == 13) { detected = 1; }                            // detect bottom
+      if (i % 4 + blockX == -1) { detected = 1; }                            // detect end (right)
       if (playfield[i % 4 + blockX][i / 4 + blockY] == 1) { detected = 1; }  // detect playfield
     }
   }
@@ -334,15 +324,7 @@ int detectPlayfieldCollisionRotate() {
   return detected;
 }
 
-void drawlogo() {
-  for (int i = 0; i < 21; i++) {
-    drawDot(60 - i, 4, logo1[i]);
-    drawDot(60 - i, 5, logo2[i]);
-    drawDot(60 - i, 6, logo3[i]);
-    drawDot(60 - i, 7, logo4[i]);
-    drawDot(60 - i, 8, logo5[i]);
-  }
-}
+
 
 void setup() {
   Serial.begin(115200);
@@ -440,44 +422,27 @@ void loop() {
         oldblockY = blockY;
         oldblockRotation = blockRotation;
 
-        if (exbutton > 0) {                          //any button pressed
-          if (exbutton == 3 and oldExbutton != 3) {  //right (towards bottom)
+        if (exbutton > 0) {  //any button pressed
+
+          if (exbutton == 3 and oldExbutton != 3) {  //Drop block if right is pressed
             turnOffOldblock();
-            while (detectPlayfieldCollision() == 0) {
-
-              // if block collides with playfield, move back up and convert to playfield
-              blockX--;
-            }
+            while (detectPlayfieldCollision() == 0) { blockX--; }
             blockX++;
-            for (int i = 0; i <= 15; i++) {
-              if (bitRead(blocks[blockType][blockRotation], i)) { playfield[i % 4 + blockX][i / 4 + blockY] = 1; }
-            }
-
-            // draw Block
-
-            for (int i = 0; i <= 15; i++) {
-              if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
-            }
-
-
+            convertToPlayfield();
+            drawBlock();
             newBlock();
           }
 
-
-
-
-          if (exbutton == 8 and oldExbutton != 8) {  // Button one; Rotate
-            blockRotation = (blockRotation - 1 + 4) % 4;
+          if (exbutton == 8 and oldExbutton != 8) {  // Button one; Rotate clockwise
+            blockRotation = (blockRotation + 3) % 4;
             turnOffOldblock();
             if (detectPlayfieldCollisionRotate() == 1) { blockRotation = (blockRotation + 1) % 4; }
           }
 
-
-
-          if (exbutton == 7 and oldExbutton != 7) {  // Button two; Rotate
+          if (exbutton == 7 and oldExbutton != 7) {  // Button two; Rotate anti-clockwise
             blockRotation = (blockRotation + 1) % 4;
             turnOffOldblock();
-            if (detectPlayfieldCollisionRotate() == 1) { blockRotation = (blockRotation - 1 + 4) % 4; }
+            if (detectPlayfieldCollisionRotate() == 1) { blockRotation = (blockRotation + 3) % 4; }
           }
 
           if (exbutton == 4 and oldExbutton != 4) {  // Button Up
@@ -491,43 +456,26 @@ void loop() {
             turnOffOldblock();
             if (detectPlayfieldCollisionSide() == 1) { blockY--; }
           }
-          if (exbutton == 6) { switchToSplash(); }  // reset
+          if (exbutton == 6) { switchToSplash(); }
         }
-
-        if (downWaiter >= 4) {  // Auto move block down
+        if (downWaiter >= 4) {  // Auto move block down one step
           downWaiter = 0;
           blockX--;
-
           if (detectPlayfieldCollision() == 1) {  // if block collides with playfield, move back up and convert to playfield
             blockX++;
-            //convert block to playfield
-            for (int i = 0; i <= 15; i++) {
-              if (bitRead(blocks[blockType][blockRotation], i)) { playfield[i % 4 + blockX][i / 4 + blockY] = 1; }
-            }
+            convertToPlayfield();
             newBlock();
+          } else turnOffOldblock();
+        } else downWaiter++;
 
-          } else {
-            turnOffOldblock();
-          }
-
-        } else {
-          downWaiter++;
-        }
-
-        // draw Block
-        if (gamestate == 1) {
-          for (int i = 0; i <= 15; i++) {
-            if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
-          }
-        }
+        if (gamestate == 1) { drawBlock(); }
         break;
 
-
-      case 0:  //splashscreen
+      case 0:  //at splashscreen
         if (exbutton > 0 and exbutton < 6) { switchToPlaying(); }
         break;
 
-      case 2:                                     //player is dead
+      case 2: //player is dead
         if (exbutton == 6) { switchToSplash(); }  // reset from game over
         break;
     }
@@ -536,7 +484,5 @@ void loop() {
 
     delay(5);
     waiter = 0;
-  } else {
-    waiter++;
-  }
+  } else waiter++;
 }
