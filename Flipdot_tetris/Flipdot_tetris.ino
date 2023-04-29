@@ -9,9 +9,8 @@ features:
 - movement needs timeout + repeating (now only has timeout)
 
 - Bug: rotation sometimes skips timout when holding down button
-- Bug block goes invisible when moving while locking
 - Bug: when holding button sometimes input is missed?
-
+- Bug: full drop causes block to go to deep/invisible?
 
 - not fully random?
 
@@ -203,6 +202,10 @@ void switchToPlaying() {
     drawDot(j, PLAYFIELD_TOP, ON_STATE);
     drawDot(j, PLAYFIELD_BOTTOM, ON_STATE);
   }
+  drawDot(50, 0, ON_STATE);
+  drawDot(50, 1, ON_STATE);
+  drawDot(50, 14, ON_STATE);
+  drawDot(50, 15, ON_STATE);
   newBlock();
 
   //   if (0) {  //add lines for debug
@@ -243,9 +246,9 @@ void clearScreen() {
 void newBlock() {
   int linesCleared = 0;
   // search and clear lines
-  for (int i = 0; i <= 112; i++) { //searchplayfield for lines
+  for (int i = 0; i <= 112; i++) {  //searchplayfield for lines
     int lineCount = 0;
-    for (int j = 3; j <= 12; j++) {  
+    for (int j = 3; j <= 12; j++) {
       if (playfield[i][j] == 1) { lineCount++; }
     }
     if (lineCount == 10) {  // full line detected
@@ -423,9 +426,8 @@ void loop() {
         oldblockRotation = blockRotation;
 
         if (exbutton > 0) {  //any button pressed
-
-          if (exbutton == 3 and oldExbutton != 3) {  //Drop block if right is pressed
-            turnOffOldblock();
+          turnOffOldblock();
+          if (exbutton == 3 and oldExbutton != 3) {  //Drop block all the way if right is pressed
             while (detectPlayfieldCollision() == 0) { blockX--; }
             blockX++;
             convertToPlayfield();
@@ -435,25 +437,21 @@ void loop() {
 
           if (exbutton == 8 and oldExbutton != 8) {  // Button one; Rotate clockwise
             blockRotation = (blockRotation + 3) % 4;
-            turnOffOldblock();
             if (detectPlayfieldCollisionRotate() == 1) { blockRotation = (blockRotation + 1) % 4; }
           }
 
           if (exbutton == 7 and oldExbutton != 7) {  // Button two; Rotate anti-clockwise
             blockRotation = (blockRotation + 1) % 4;
-            turnOffOldblock();
             if (detectPlayfieldCollisionRotate() == 1) { blockRotation = (blockRotation + 3) % 4; }
           }
 
           if (exbutton == 4 and oldExbutton != 4) {  // Button Up
             blockY--;
-            turnOffOldblock();
             if (detectPlayfieldCollisionSide() == 1) { blockY++; }
           }
 
           if (exbutton == 5 and oldExbutton != 5) {  // Button Down
             blockY++;
-            turnOffOldblock();
             if (detectPlayfieldCollisionSide() == 1) { blockY--; }
           }
           if (exbutton == 6) { switchToSplash(); }
@@ -463,6 +461,7 @@ void loop() {
           blockX--;
           if (detectPlayfieldCollision() == 1) {  // if block collides with playfield, move back up and convert to playfield
             blockX++;
+            drawBlock();
             convertToPlayfield();
             newBlock();
           } else turnOffOldblock();
@@ -475,7 +474,7 @@ void loop() {
         if (exbutton > 0 and exbutton < 6) { switchToPlaying(); }
         break;
 
-      case 2: //player is dead
+      case 2:                                     //player is dead
         if (exbutton == 6) { switchToSplash(); }  // reset from game over
         break;
     }
