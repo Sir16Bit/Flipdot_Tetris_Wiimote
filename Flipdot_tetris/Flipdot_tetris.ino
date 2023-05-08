@@ -156,7 +156,7 @@ void convertToPlayfield() {
 void drawLogo() {
   for (int j = 0; j <= 111; j++) {
     for (int i = 0; i <= 15; i++) {
-      if (bitRead(logoBitmap[i][13 - j / 8], j % 8)) { drawDot(j, 15 - i, ON_STATE); }
+      if (bitRead(logoBitmap[i][13 - j / 8], j % 8) == 0) { drawDot(j, 15 - i, ON_STATE); }
     }
   }
 }
