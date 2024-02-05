@@ -17,7 +17,57 @@ features:
 - Request: show next block chasing
 - Request: Show pixelbar logo when standby
 
+
+
+
+
+
+TODO LEd Display
+
+- sluggish controls
+- Fix logos
+- Add adaptableness (playfield and display)
+- Bug: block already on bottom when new game after game over
+- add colors
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 */
+
+
+#include "FastLED.h"
+
+// Pride2015
+// Animated, ever-changing rainbows.
+// by Mark Kriegsman
+
+#if FASTLED_VERSION < 3001000
+#error "Requires FastLED 3.1 or later; check github for latest code."
+#endif
+
+#define DATA_PIN    12
+//#define CLK_PIN   4
+#define LED_TYPE    WS2811
+#define COLOR_ORDER GRB
+#define NUM_LEDS    1024
+#define BRIGHTNESS  50
+
+CRGB leds[NUM_LEDS];
+
+
+
 
 #define PANEL_NOF_COLUMNS 28                                       ///< Number of columns per panel
 #define DISPLAY_NOF_PANELS 4                                       ///< Number of daisy chained panels that form the display.
@@ -30,6 +80,14 @@ features:
 #define PLAYFIELD_BOTTOM 13
 #define PLAYFIELD_RIGHT 2
 
+#define PLAYFIELD_HEIGTH 112
+#define PLAYFIELD_WIDTH 12
+
+#define DISPLAY_HEIGTH 16
+#define DISPLAY_WIDTH 16
+
+
+
 #include "ESP32Wiimote.h"
 
 ESP32Wiimote wiimote;
@@ -37,7 +95,7 @@ int waiter = 0;
 static bool logging = true;
 static long last_ms = 0;
 static int num_run = 0, num_updates = 0;
-int playfield[112][16];
+int playfield[PLAYFIELD_HEIGTH][PLAYFIELD_WIDTH];
 int exbutton = 0;
 int oldExbutton = 0;
 
@@ -51,7 +109,8 @@ int oldblockRotation = 0;
 
 int downWaiter = 0;
 
-int gameover[7][4] = { { 0b0011110000111000, 0b1100011011111110, 0b0011111001110011, 0b0111111101111110 },
+int gameover[7][4] = { 
+                       { 0b0011110000111000, 0b1100011011111110, 0b0011111001110011, 0b0111111101111110 },
                        { 0b0110000001111100, 0b1110111011100000, 0b0111001101110011, 0b0111000001110011 },
                        { 0b1110000011100110, 0b1111111011100000, 0b0111001101110011, 0b0111000001110011 },
                        { 0b1110111011100110, 0b1111111011111100, 0b0111001101110011, 0b0111111001110110 },
@@ -59,6 +118,14 @@ int gameover[7][4] = { { 0b0011110000111000, 0b1100011011111110, 0b0011111001110
                        { 0b0110011011100110, 0b1100011011100000, 0b0111001100011100, 0b0111000001110110 },
                        { 0b0011111011100110, 0b1100011011111110, 0b0011111000001000, 0b0111111101110011 } };
 
+int oldgameover[7][4] = { 
+                       { 0b0011110000111000, 0b1100011011111110, 0b0011111001110011, 0b0111111101111110 },
+                       { 0b0110000001111100, 0b1110111011100000, 0b0111001101110011, 0b0111000001110011 },
+                       { 0b1110000011100110, 0b1111111011100000, 0b0111001101110011, 0b0111000001110011 },
+                       { 0b1110111011100110, 0b1111111011111100, 0b0111001101110011, 0b0111111001110110 },
+                       { 0b1110011011111110, 0b1101011011100000, 0b0111001100110110, 0b0111000001111100 },
+                       { 0b0110011011100110, 0b1100011011100000, 0b0111001100011100, 0b0111000001110110 },
+                       { 0b0011111011100110, 0b1100011011111110, 0b0011111000001000, 0b0111111101110011 } };                       
 
 
 
@@ -89,7 +156,7 @@ int oldlogoBitmap[16][14] = { { 0b11111110, 0b00001111, 0b10000000, 0b00011111, 
                            { 0b11100000, 0b00000000, 0b10000100, 0b00010000, 0b10000000, 0b01000010, 0b00011100, 0b00110000, 0b00011100, 0b01001001, 0b11111111, 0b11111101, 0b11111111, 0b11111111 },
                            { 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111111, 0b11111101, 0b11111111, 0b11111111 } };
 
-int logoBitmap[16][14] = {{0b00000000,0b11110000,0b01111111,0b11100000,0b01111000,0b00111101,0b11111011,0b10011111,0b11000001,0b01110001,0b10010000,0b01110011,0b01111000,0b10011000},
+int lessoldlogoBitmap[16][14] = {{0b00000000,0b11110000,0b01111111,0b11100000,0b01111000,0b00111101,0b11111011,0b10011111,0b11000001,0b01110001,0b10010000,0b01110011,0b01111000,0b10011000},
 {0b00000000,0b11110000,0b01111001,0b11100000,0b01111000,0b00111101,0b11110011,0b10111111,0b11100001,0b01110001,0b10010011,0b11100111,0b01101000,0b01110000},
 {0b00000000,0b11110000,0b01111000,0b11100000,0b01111000,0b00111101,0b11100011,0b10111101,0b11100000,0b01110001,0b10010001,0b11001111,0b00110100,0b00100000},
 {0b00000000,0b11110000,0b01111000,0b01100000,0b01111000,0b00111101,0b11000011,0b10111001,0b11100000,0b00100001,0b10000101,0b11001110,0b00110100,0b00100000},
@@ -109,7 +176,24 @@ int logoBitmap[16][14] = {{0b00000000,0b11110000,0b01111111,0b11100000,0b0111100
 
 
 
-
+int logoBitmap[16][2] = {
+{0b00000000,0b11110000},
+{0b00000000,0b11110000},
+{0b00000000,0b11110000},
+{0b00000000,0b11110000},
+{0b00000000,0b11010000},
+{0b00000000,0b10110000},
+{0b00000000,0b11010000},
+{0b00000000,0b10110000},
+{0b00000000,0b11010000},
+{0b00000000,0b00010000},
+{0b00001000,0b00010001},
+{0b00000100,0b00010011},
+{0b00000100,0b00010001},
+{0b00000010,0b00010001},
+{0b00001111,0b11111111},
+{0b00000000,0b00000000},
+};
 
 
 
@@ -132,19 +216,39 @@ void drawDot(int col, int row, int pol) {
    */
   // if(pol==1){pol=0;}
   // else{if(pol==0){pol=0;}}
-  uint8_t cmdl, cmdh;
+ // uint8_t cmdl, cmdh;
 
-  cmdl = (pol ? (1 << 4) : 0) | (row & 0x0F);
-  cmdh = (1 << 7) | (col & 0x7F);
-  Serial2.write(cmdh);
-  Serial2.write(cmdl);
-  Serial2.flush();
+if (row % 2 == 1){ col = 15 -col;}
+
+
+
+
+if (pol == ON_STATE){
+ leds[row*16+col] = 0xFF0000;
+}
+
+
+if (pol == OFF_STATE){
+ leds[row*16+col] = 0x000000;
+}
+  
+
+
+ // cmdl = (pol ? (1 << 4) : 0) | (row & 0x0F);
+ // cmdh = (1 << 7) | (col & 0x7F);
+  //Serial2.write(cmdh);
+ // Serial2.write(cmdl);
+  //Serial2.flush();
+ //leds[0] = 0xFFffff;
+  //FastLED.show();  
+
 }
 
 void drawBlock() {
   for (int i = 0; i <= 15; i++) {
     if (bitRead(blocks[blockType][blockRotation], i)) { drawDot(i % 4 + blockX, i / 4 + blockY, ON_STATE); }
   }
+  FastLED.show();  
 }
 
 void convertToPlayfield() {
@@ -154,11 +258,14 @@ void convertToPlayfield() {
 }
 
 void drawLogo() {
-  for (int j = 0; j <= 111; j++) {
+  //leds[3] = 0xFF00FF;
+ // FastLED.show();  
+  for (int j = 0; j <= 15; j++) {
     for (int i = 0; i <= 15; i++) {
-      if (bitRead(logoBitmap[i][13 - j / 8], j % 8) == 0) { drawDot(j, 15 - i, ON_STATE); }
+      if (bitRead(logoBitmap[i][1 - j / 8], j % 8) == 0) { drawDot(j, 15 - i, ON_STATE); }
     }
   }
+  FastLED.show();  
 }
 
 
@@ -184,6 +291,7 @@ void turnOffOldblock() {
   for (int i = 0; i <= 15; i++) {
     if (bitRead(blocks[blockType][oldblockRotation], i)) { drawDot(i % 4 + oldblockX, i / 4 + oldblockY, OFF_STATE); }
   }
+  FastLED.show();  
 }
 
 
@@ -196,11 +304,12 @@ void switchToDeath() {
 
 
 
-  for (int j = 0; j <= 63; j++) {
+  for (int j = 0; j <= 15; j++) {
     for (int i = 0; i <= 6; i++) {
-      if (bitRead(gameover[i][3 - j / 16], j % 16)) { drawDot(j + 25, i + 4, ON_STATE); }
+      if (bitRead(gameover[i], j)) { drawDot(j, i, ON_STATE); }
     }
   }
+  FastLED.show();  
 }
 
 void switchToPlaying() {
@@ -211,17 +320,17 @@ void switchToPlaying() {
   fillScreen();
   delay(500);
   clearScreen();
+  
 
-
-
-  for (int j = 111; j >= 0; j--) {  // draw playfield edges
+//draw borders for playfield
+  for (int j = 16-1; j >= 0; j--) {  // draw playfield edges
     drawDot(j, PLAYFIELD_TOP, ON_STATE);
     drawDot(j, PLAYFIELD_BOTTOM, ON_STATE);
   }
-  drawDot(50, 0, ON_STATE);
-  drawDot(50, 1, ON_STATE);
-  drawDot(50, 14, ON_STATE);
-  drawDot(50, 15, ON_STATE);
+  drawDot(10, 0, ON_STATE);  //not adaptable
+  drawDot(10, 1, ON_STATE);  //not adaptable
+  drawDot(10, 14, ON_STATE); //not adaptable
+  drawDot(10, 15, ON_STATE); //not adaptable
   newBlock();
 
   //   if (0) {  //add lines for debug
@@ -240,29 +349,38 @@ void switchToPlaying() {
   //       }
   //     }
   //   }
+   
+  FastLED.show();  
 }
 
 void fillScreen() {
-  for (int i = 15; i >= 0; i--) {
-    for (int j = 111; j >= 0; j--) {
+  for (int i = DISPLAY_WIDTH-1; i >= 0; i--) {
+    for (int j = PLAYFIELD_HEIGTH-1; j >= 0; j--) {
       drawDot(j, i, ON_STATE);
     }
   }
+  FastLED.show();  
 }
 
 void clearScreen() {
-  for (int i = 15; i >= 0; i--) {
-    for (int j = 111; j >= 0; j--) {
+  //leds[0] = 0x000000;
+  //FastLED.show();  
+  for (int i = DISPLAY_WIDTH-1; i >= 0; i--) {
+    for (int j = DISPLAY_HEIGTH-1; j >= 0; j--) {
       drawDot(j, i, OFF_STATE);
       // delay(10);
     }
   }
+  FastLED.show();  
 }
 
 void newBlock() {
   int linesCleared = 0;
   // search and clear lines
-  for (int i = 0; i <= 112; i++) {  //searchplayfield for lines
+
+
+
+  for (int i = 0; i <= PLAYFIELD_HEIGTH-1; i++) {  //searchplayfield for lines
     int lineCount = 0;
     for (int j = 3; j <= 12; j++) {
       if (playfield[i][j] == 1) { lineCount++; }
@@ -271,32 +389,36 @@ void newBlock() {
       linesCleared++;
       for (int k = 3; k <= 12; k++) {  //animate line clear
         drawDot(i + linesCleared - 1, k, OFF_STATE);
-        delay(50);
+        delay(100);
+        FastLED.show(); 
       }
+      
       // squash playfield
-      for (int cl = i; cl <= 112; cl++) {
+      for (int cl = i; cl <= PLAYFIELD_HEIGTH; cl++) {
         for (int m = 3; m <= 12; m++) {
           playfield[cl][m] = playfield[cl + 1][m];
         }
       }
       i--;
+      
     }
+    
   }
 
   if (linesCleared) {
     //update playfield
     for (int a = 3; a <= 12; a++) {
-      for (int b = 0; b <= 112; b++) {
+      for (int b = 0; b <= 15; b++) {
         if (playfield[b][a] == 0) { drawDot(b, a, OFF_STATE); }
         if (playfield[b][a] == 1) { drawDot(b, a, ON_STATE); }
       }
     }
   }
-
+ FastLED.show();  
   blockType = random(7);
   blockRotation = random(3);
 
-  blockX = 50;
+  blockX = 12;
   blockY = 7;
 
   if (detectPlayfieldCollision() == 1) { switchToDeath(); }  // if block collides with playfield, trigger death
@@ -310,7 +432,7 @@ int detectPlayfieldCollision() {
       if (i % 4 + blockX == -1) { detected = 1; }                            // detect Right
     }
   }
-  Serial.println("detecting");
+ // Serial.println("detecting");
   return detected;
 }
 
@@ -346,6 +468,19 @@ int detectPlayfieldCollisionRotate() {
 
 
 void setup() {
+
+ // tell FastLED about the LED strip configuration
+  FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS)
+    .setCorrection(TypicalLEDStrip)
+    .setDither(BRIGHTNESS < 255);
+
+  // set master brightness control
+  FastLED.setBrightness(BRIGHTNESS);
+
+
+
+
+
   Serial.begin(115200);
   Serial.println("ESP32Wiimote");
 
@@ -354,7 +489,7 @@ void setup() {
   Serial.println("Started");
   last_ms = millis();
 
-  Serial2.begin(74880);
+  //Serial2.begin(74880);
   clearScreen();
   switchToSplash();
 }
